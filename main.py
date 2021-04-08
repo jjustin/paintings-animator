@@ -11,19 +11,23 @@ detector = dlib.get_frontal_face_detector()
 
 class Image:
     def __init__(self, img):
+        # cv2 image object
         self.img = img
+        # gray representation
         self.gray = cv2.cvtColor(src=self.img, code=cv2.COLOR_BGR2GRAY)
         faces = detector(self.gray)
         if(len(faces) == 0):
             raise "No face detected"
+        # face's data
         self.face = faces[0]
         self.landmarks = predictor(image=self.gray, box=self.face)
         self.rows, self.cols, self.ch = img.shape
         self.points = [[self.landmarks.part(
             i).x, self.landmarks.part(i).y]for i in range(0, N_OF_LANDMARKS)]
-        self.border = [[0, 0], [self.cols, 0], [
-            0, self.rows], [self.cols, self.rows]]
+        self.border = [[0, 0], [self.cols, 0],
+                       [0, self.rows], [self.cols, self.rows]]
 
+    # draws the image on plt
     def draw(self, img=None, include_points=True, window_name="Generic name", subplot=111):
         if img is None:
             img = self.img.copy()
@@ -37,9 +41,14 @@ class Image:
                 # Draw a circle
                 cv2.circle(img=img, center=(x, y), radius=3,
                            color=(0, 255, 0), thickness=-1)
-        plt.subplot(subplot), plt.imshow(img)
+        # [:,:,::-1] converts to RGB color space
+        plt.subplot(subplot), plt.imshow(img[:, :, ::-1])
+        plt.subplot(subplot), plt.imshow(img[:, :, ::-1])
 
-    def draw_with_applied(self, from_img, window_name="Generic name", subplot=111):
+    # applies from_img's face landmarks to image and draws it
+    def draw_with_applied(self, from_img, anchor, window_name="Generic name", subplot=111):
+        changes = [[from_img.points[i][j]-anchor.points[i][j] for j in range(2)]
+                   for i in range(N_OF_LANDMARKS)]
         from_pts = from_img.points.copy()
         # coordinates of faces
         fx1, fy1 = from_img.face.left(), from_img.face.top()
@@ -50,8 +59,8 @@ class Image:
         x_scale = (tx2-tx1)/(fx2-fx1)
         y_scale = (ty2-ty1)/(fy2-fy1)
         for i in range(N_OF_LANDMARKS):
-            from_pts[i][0] = tx1 + x_scale * (from_pts[i][0] - fx1)  # x
-            from_pts[i][1] = ty1 + y_scale * (from_pts[i][1] - fy1)  # y
+            from_pts[i][0] = self.points[i][0] + x_scale*changes[i][0]  # x
+            from_pts[i][1] = self.points[i][1] + y_scale*changes[i][1]  # y
 
         tform = PiecewiseAffineTransform()
         tform.estimate(np.float32(from_pts+self.border),  # border has to be self, so that image does not compress
@@ -64,10 +73,15 @@ class Image:
 
 if __name__ == "__main__":
     # read the image
-    from_img = Image(cv2.imread("from.jpg"))
-    to_img = Image(cv2.imread("to.jpg"))
-
-    from_img.draw(window_name="from", subplot=131)
-    to_img.draw(window_name="to", subplot=133)
-    to_img.draw_with_applied(from_img, window_name="mix", subplot=132)
+    print("loading images")
+    anchor = Image(cv2.imread("from_1.jpg"))
+    from_img = Image(cv2.imread("from_2.jpg"))
+    to_img = Image(cv2.imread("to_.jpg"))
+    print("done loading")
+    anchor.draw(window_name="anchor", subplot=234)
+    from_img.draw(window_name="from", subplot=231)
+    to_img.draw(window_name="to", subplot=236, include_points=False)
+    to_img.draw(window_name="to", subplot=233)
+    to_img.draw_with_applied(from_img, anchor,
+                             window_name="mix", subplot=132)
     plt.show()
