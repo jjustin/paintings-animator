@@ -3,6 +3,9 @@ import dlib
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage.transform import PiecewiseAffineTransform, warp
+from tqdm import tqdm
+from math import floor
+
 N_OF_LANDMARKS = 81
 predictor = dlib.shape_predictor(
     f"shape_predictor_{N_OF_LANDMARKS}_face_landmarks.dat")
@@ -27,6 +30,9 @@ class Image:
         self.border = [[0, 0], [self.cols, 0],
                        [0, self.rows], [self.cols, self.rows]]
 
+    def size(self):
+        return (self.cols, self.rows)
+
     # draws the image on plt
     def draw(self, img=None, include_points=True, window_name="Generic name", subplot=111):
         if img is None:
@@ -43,10 +49,9 @@ class Image:
                            color=(0, 255, 0), thickness=-1)
         # [:,:,::-1] converts to RGB color space
         plt.subplot(subplot), plt.imshow(img[:, :, ::-1])
-        plt.subplot(subplot), plt.imshow(img[:, :, ::-1])
 
-    # applies from_img's face landmarks to image and draws it
-    def draw_with_applied(self, from_img, anchor, window_name="Generic name", subplot=111):
+    # applies from_img's face landmarks to image
+    def apply(self, from_img, anchor):
         changes = [[from_img.points[i][j]-anchor.points[i][j] for j in range(2)]
                    for i in range(N_OF_LANDMARKS)]
         from_pts = from_img.points.copy()
@@ -66,22 +71,44 @@ class Image:
         tform.estimate(np.float32(from_pts+self.border),  # border has to be self, so that image does not compress
                        np.float32(self.points + self.border))
 
-        img = warp(self.img, tform, output_shape=(self.rows, self.cols))
-        self.draw(img=img, include_points=False,
-                  window_name=window_name, subplot=subplot)
+        return warp(self.img, tform, output_shape=(self.rows, self.cols))
+
+
+class Video:
+    def __init__(self, vid):
+        self.vid = vid
+
+    def get_frame(self, ms):
+        self.vid.set(cv2.CAP_PROP_POS_MSEC, ms)
+        hasFrame, img = self.vid.read()
+        return Image(img), hasFrame
+
+    def length(self):   # in seconds
+        fps = self.vid.get(cv2.CAP_PROP_FPS)
+        totalNoFrames = self.vid.get(cv2.CAP_PROP_FRAME_COUNT)
+        return float(totalNoFrames) / float(fps)
 
 
 if __name__ == "__main__":
     # read the image
-    print("loading images")
-    anchor = Image(cv2.imread("from_1.jpg"))
-    from_img = Image(cv2.imread("from_2.jpg"))
+    print("loading files")
+    vid = Video(cv2.VideoCapture('input.mov'))
+    anchor, _ = vid.get_frame(0)
     to_img = Image(cv2.imread("to_.jpg"))
     print("done loading")
-    anchor.draw(window_name="anchor", subplot=234)
-    from_img.draw(window_name="from", subplot=231)
-    to_img.draw(window_name="to", subplot=236, include_points=False)
-    to_img.draw(window_name="to", subplot=233)
-    to_img.draw_with_applied(from_img, anchor,
-                             window_name="mix", subplot=132)
-    plt.show()
+
+    fps = 12
+    out = cv2.VideoWriter(
+        "ouput.mp4", cv2.VideoWriter_fourcc(*'MP4V'), fps, to_img.size())
+
+    vid_len = vid.length()
+    for frame in tqdm(range(floor(vid_len*fps))):
+        from_img, has_frame = vid.get_frame(1/fps*frame*1000)
+        if(has_frame):
+            frame_img = to_img.apply(from_img, anchor)
+            frame_img = (frame_img*255).astype(np.uint8)  # image depth set
+            out.write(frame_img)
+        else:
+            print("No frame available")
+            break
+    out.release()
