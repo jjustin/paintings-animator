@@ -1,0 +1,27 @@
+html,
+body {
+  height: 100%;
+}
+
+#container {
+  display: grid;
+  background-color: aqua;
+  grid-template-areas:
+    "result image-picker image-picker"
+    "result image-picker image-picker"
+    "video-picker video-picker video-picker";
+  height: 100%;
+}
+
+#result {
+  grid-area: result;
+  background-color: black;
+}
+#video-picker {
+  grid-area: video-picker;
+  background-color: yellow;
+}
+#image-picker {
+  grid-area: image-picker;
+  background-color: blue;
+}

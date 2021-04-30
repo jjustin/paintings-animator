@@ -15,7 +15,7 @@
 
         <div id="image-picker">
             <div class="row">
-                <p id="demo"></p>   
+                <p id="demo"></p>
 
                 <script>
 
@@ -27,7 +27,7 @@
                         var obj = await getArray()
                         console.log(obj)
                         var arr = obj.images
-                      
+
                         for (img of arr) {
                             const image = document.createElement('img')
                             image.src = '/images/' + img
@@ -42,7 +42,7 @@
 
                     myFunction()
 
-                    document.querySelectorAll('#demo').forEach(function(el) {
+                    document.querySelectorAll('#demo').forEach(function (el) {
                         el.addEventListener('click', function (e) {
                             console.log(e.target.id)
 
@@ -53,20 +53,20 @@
                                 for (var i = 0; i < children.length; i++) {
                                     var tableChild = children[i]
                                     // console.log(tableChild)                                    
-                                    tableChild.style.border = '' 
+                                    tableChild.style.border = ''
                                 }
                                 e.target.style.border = "6px solid grey"
                                 selected_img = e.target.id
                                 el.style.border = ''
                             }
                             else {
-                                e.target.style.border = "6px solid grey"  
+                                e.target.style.border = "6px solid grey"
                                 selected_img = e.target.id
                                 el.style.border = ''
                                 // console.log(selected_img)
                             }
                             console.log(selected_img)
-                            changeVideo()                                     
+                            changeVideo()
                         })
                     })
                 </script>
@@ -85,7 +85,7 @@
                 var selected_emoji = ''
 
                 function changeVideo() {
-                    console.log(selected_emoji, selected_img)  
+                    console.log(selected_emoji, selected_img)
                     if (selected_emoji != '' && selected_img != '') {
                         var output = document.getElementById("video")
                         var source = document.getElementById("source")
@@ -96,7 +96,7 @@
                         output.play()
 
                         console.log(output)
-                    }                      
+                    }
                 }
 
                 function border(el) {
@@ -105,18 +105,18 @@
                     if (selected_emoji != '') {
 
                         for (var i = 0; i < els.length; i++) {
-                            var tableChild = els[i]      
-                            tableChild.style.border = '' 
+                            var tableChild = els[i]
+                            tableChild.style.border = ''
                         }
                         el.style.border = "6px solid grey"
                         selected_emoji = el.id
                     }
                     else {
-                        el.style.border = "6px solid grey"  
+                        el.style.border = "6px solid grey"
                         selected_emoji = el.id
                         console.log(selected_emoji)
                     }
-                    changeVideo()                    
+                    changeVideo()
                 }
 
             </script>
@@ -125,7 +125,7 @@
         <div id="result">
             <video class="result-video" autoplay="autoplay" id="video" muted loop> >
                 <source id="source" src="output/video1.mp4" type="video/mp4">
-            </video>               
+            </video>
         </div>
     </div>
 </body>
