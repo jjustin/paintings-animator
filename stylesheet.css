@@ -5,7 +5,7 @@ body {
 
 #container {
   display: grid;
-  background-color: lightcyan;
+  background-color: rgb(178, 224, 224);
   grid-template-areas:
     "result image-picker image-picker"
     "result image-picker image-picker"
@@ -19,6 +19,7 @@ body {
   grid-area: result;
   background-color: black;
   border-radius: 10px;
+  margin: 20px;
 }
 
 .result-video {
@@ -27,45 +28,38 @@ body {
 }
 
 #video-picker {
+  display: flex;
   grid-area: video-picker;
-  background-color: yellow;
-  padding: 50px 50px;
   border-radius: 10px;
   overflow: scroll;
   direction: ltr;
   background-color: whitesmoke;
+  margin: 20px;
 }
 
 .source-video {
-  width: 20%;
+  width: 30%;
   height: auto;
+  background-color: whitesmoke;
 }
 
 #image-picker {
+  display: flex;
+  flex-wrap: wrap;
   grid-area: image-picker;
   background-color: whitesmoke;
   padding: 12px 24px;
   border-radius: 10px;
   overflow: scroll;
+  margin: 20px;
 }
 
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 0 4px;
-}
 
-.column {
-  flex: 50%;
-  padding: 0 4px;
-}
-
-#image {
-  border-radius: 10px;
-  margin-top: 5px;
+.image {
+  border-radius: 30px;
+  margin: 10px;
   vertical-align: middle;
-  width: 33%;
+  width: 20%;
   height: auto;
-  padding: 10px 10px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
