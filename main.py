@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from skimage.transform import PiecewiseAffineTransform, warp
 from tqdm import tqdm
 from math import floor
+import json
 
 N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
@@ -127,7 +128,7 @@ if __name__ == "__main__":
     # read the image
     print("loading files")
     vid = Video(cv2.VideoCapture('input.mov'))
-    anchor, _ = vid.get_frame(0)
+    anchor, _ = vid.get_frame(0)                                            #prvi frame
     to_img = Image(cv2.imread("to2.jpg"))
     print("done loading")
 
@@ -135,14 +136,38 @@ if __name__ == "__main__":
     out = cv2.VideoWriter(
         "ouput.mp4", cv2.VideoWriter_fourcc(*'MP4V'), fps, to_img.size())
 
-    vid_len = vid.length()
+
+    #preprocess video
+    coords_dict = {}
+    vid_len = vid.length()   
     for frame in tqdm(range(floor(vid_len*fps))):
         from_img, has_frame = vid.get_frame(1/fps*frame*1000)
-        if(has_frame):
-            frame_img = to_img.apply(from_img, anchor)
-            frame_img = (frame_img*255).astype(np.uint8)   # image depth set
-            out.write(frame_img)
-        else:
-            print("No frame available")
-            break
-    out.release()
+
+        if (has_frame):
+            coords_dict[frame] = from_img.points
+
+    with open('./preprocess/preprocess_input.mov.txt', 'w') as out_file:
+        json.dump(coords_dict, out_file)
+
+    #get coordinates for every frame
+    with open('./preprocess/preprocess_input.mov.txt') as json_file:
+        data = json.load(json_file)
+
+        for frame in data:
+            print(data[frame])
+            #?? nau slo pol z types v apply
+
+
+
+    # for frame in tqdm(range(floor(vid_len*fps))):
+
+    #     from_img, has_frame = vid.get_frame(1/fps*frame*1000)               #from_img je en frame iz videja
+
+    #     if (has_frame):
+    #         frame_img = to_img.apply(from_img, anchor)
+            # frame_img = (frame_img*255).astype(np.uint8)   # image depth set
+    #         out.write(frame_img)
+    #     else:
+    #         print("No frame available")
+    #         break
+    # out.release()
