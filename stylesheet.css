@@ -3,7 +3,7 @@ body {
   height: 100%;
 }
 
-#container {    
+#container {
   display: grid;
   background-color: lightcyan;
   grid-template-areas:
@@ -14,15 +14,16 @@ body {
 }
 
 #result {
+  display: flex;
+  align-items: center;
   grid-area: result;
   background-color: black;
-  padding: 12px 24px;
   border-radius: 10px;
 }
 
 .result-video {
+  background-size: 100% 100%;
   width: 100%;
-  height: auto;
 }
 
 #video-picker {
