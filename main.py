@@ -6,11 +6,12 @@ import matplotlib.pyplot as plt
 from skimage.transform import PiecewiseAffineTransform, warp
 from tqdm import tqdm
 from math import floor
-import json, os, copy
+import json, os, copy, errno
 
 N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
 FPS = 6
+SAFE_BORDER_SCALE=1.1
 
 predictor = dlib.shape_predictor(
     f"shape_predictor_{N_OF_LANDMARKS}_face_landmarks.dat")
@@ -62,7 +63,7 @@ class Image:
         return img
 
     # applies from_img's face landmarks to image
-    def apply(self, anchor_points, from_img_points, from_img_face_points):
+    def apply(self, anchor_points, from_img_points, from_img_face_points, unsafe_border):
         if not self.contains_face:
             return self.add_text("No face found", fontColor=(255, 0, 0))
 
@@ -99,10 +100,10 @@ class Image:
         for i in range(N_OF_LANDMARKS):
             from_pts[i][0] = self.points[i][0] + x_scale*changes[i][0]  # x
             from_pts[i][1] = self.points[i][1] + y_scale*changes[i][1]  # y
-
+        border_points = unsafe_border.to_rect_points()
         tform = PiecewiseAffineTransform()
-        tform.estimate(np.float32(from_pts+self.border),  # border has to be self, so that image does not compress
-                       np.float32(self.points + self.border))
+        tform.estimate(np.float32(from_pts+border_points+self.border),  # self.border has to be self, so that image does not compress
+                       np.float32(self.points+border_points+self.border))
 
         img = warp(img, tform, output_shape=(self.rows, self.cols))
         
@@ -127,7 +128,69 @@ class Video:
         totalNoFrames = self.vid.get(cv2.CAP_PROP_FRAME_COUNT)
         return float(totalNoFrames) / float(fps)
 
+class UnsafeBorder:
+    def __init__(self, top, bottom, left, right):
+        self._top = top
+        self._bottom = bottom
+        self._left = left
+        self._right = right
+
+    def to_rect_points(self):
+        return [
+            [self._left, self._top],
+            [self._right, self._top],
+            [self._left, self._bottom],
+            [self._right, self._bottom]
+        ]
+    def top(self): 
+        return self._top
+    def bottom(self): 
+        return self._bottom
+    def left(self): 
+        return self._left
+    def right(self): 
+        return self._right
+
+def get_unsafe_border(frames, to_img: Image):
+    # get info on video data
+    top, bottom, left, right = offset_from_anchor_point(frames)
+    anchor_top, anchor_bottom, anchor_left, anchor_right = offset_from_anchor_point([frames[0]])
+    from_top, from_bottom, from_left, from_right = offset_from_anchor_point([to_img.points])
+    
+    top_scale = (from_top)/(anchor_top)
+    bottom_scale = (from_bottom)/(anchor_bottom)
+    left_scale = (from_left)/(anchor_left)
+    right_scale = (from_right)/(anchor_right)
+
+    return UnsafeBorder(
+     int(to_img.points[27][1] - top * top_scale *SAFE_BORDER_SCALE),
+     int(to_img.points[27][1] - bottom * bottom_scale *SAFE_BORDER_SCALE), 
+     int(to_img.points[27][0] - left * left_scale *SAFE_BORDER_SCALE), 
+     int(to_img.points[27][0] - right * right_scale *SAFE_BORDER_SCALE))
+
+def offset_from_anchor_point(frames):
+    x_diff_left = float('-inf')
+    x_diff_right = float('inf')
+    y_diff_up = float('-inf')
+    y_diff_down = float('inf')
+
+    # look over all frames, to find the highest and lowest points, that are still face affected
+    for frame in frames:
+        for point in frame:
+            xdiff = frame[27][0] - point[0]
+            ydiff = frame[27][1] - point[1]
+            if(x_diff_left < xdiff):
+                x_diff_left = xdiff
+            if(x_diff_right > xdiff):
+                x_diff_right = xdiff
+            if(y_diff_up < ydiff):
+                y_diff_up = ydiff
+            if(y_diff_down > ydiff):
+                y_diff_down = ydiff
+    return (y_diff_up, y_diff_down,x_diff_left, x_diff_right)
+
 if __name__ == "__main__":
+    # Create output dir if it does not exist
     if not os.path.exists("output"):
         try: 
             os.makedirs("output")
@@ -135,31 +198,33 @@ if __name__ == "__main__":
             if exc.errno != errno.EEXIST:
                 raise
 
-
     # read the image
     print("loading the image") 
-    #change image name here
+    # change image name here
     img_name = "to4.jpg"                                
     to_img = Image(cv2.imread(img_name))
     print("done loading the image")
 
     video_n = "input"
 
+    # create output object
     img_n  = img_name.split('.')
     output_name = './output/output_' + video_n + '_' + img_n[0] + '.mp4'
     out = cv2.VideoWriter(
-        output_name, cv2.VideoWriter_fourcc(*'MP4V'), FPS, to_img.size())
+        output_name, cv2.VideoWriter_fourcc("mp4v"), FPS, to_img.size())
  
     #get coordinates for every frame
     json_path = './preprocess/preprocess_' + video_n + '.json'
     with open(json_path) as json_file:
         data = json.load(json_file)
 
-    points, face_points = data["coords"], data["face"]
-    anchor_points = copy.deepcopy(points[0])
-    
-    for i in range(len(points)):
-        frame_img = to_img.apply(anchor_points, points[i], face_points[i])
+    frames, face_frames = data["coords"], data["face"]
+    anchor_frames = copy.deepcopy(frames[0])
+
+    unsafe_border = get_unsafe_border(frames, to_img)
+
+    for i in tqdm(range(len(frames))):
+        frame_img = to_img.apply(anchor_frames, frames[i], face_frames[i], unsafe_border)
         frame_img = (frame_img*255).astype(np.uint8)   # image depth set
         out.write(frame_img)
     out.release() 
