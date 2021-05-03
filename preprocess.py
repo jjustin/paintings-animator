@@ -1,4 +1,4 @@
-from main import Image, Video
+from main import Image, Video, FPS
 import cv2
 from tqdm import tqdm
 from math import floor
@@ -44,8 +44,7 @@ if __name__ == "__main__":
             if exc.errno != errno.EEXIST:
                 raise
 
-    fps = 6 
     video_file_name= "input.mov" 
 
-    preprocess_video(video_file_name, fps)
+    preprocess_video(video_file_name, FPS)
 

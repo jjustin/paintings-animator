@@ -10,6 +10,7 @@ import json, os, copy
 
 N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
+FPS = 6
 
 predictor = dlib.shape_predictor(
     f"shape_predictor_{N_OF_LANDMARKS}_face_landmarks.dat")
@@ -142,13 +143,12 @@ if __name__ == "__main__":
     to_img = Image(cv2.imread(img_name))
     print("done loading the image")
 
-    fps = 6
     video_n = "input"
 
     img_n  = img_name.split('.')
     output_name = './output/output_' + video_n + '_' + img_n[0] + '.mp4'
     out = cv2.VideoWriter(
-        output_name, cv2.VideoWriter_fourcc(*'MP4V'), fps, to_img.size())
+        output_name, cv2.VideoWriter_fourcc(*'MP4V'), FPS, to_img.size())
  
     #get coordinates for every frame
     json_path = './preprocess/preprocess_' + video_n + '.json'
