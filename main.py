@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 from skimage.transform import PiecewiseAffineTransform, warp
 from tqdm import tqdm
 from math import floor
-import json
-import copy
+import json, os, copy
 
 N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
@@ -113,7 +112,6 @@ class Image:
        
         return img
 
-
 class Video:
     def __init__(self, vid):
         self.vid = vid
@@ -128,71 +126,41 @@ class Video:
         totalNoFrames = self.vid.get(cv2.CAP_PROP_FRAME_COUNT)
         return float(totalNoFrames) / float(fps)
 
-
-def preprocess_video(new_video, fps):
-    #read the video
-    print("loading the video")
-    vid = Video(cv2.VideoCapture(new_video))
-    # anchor, _ = vid.get_frame(0)                                              #first frame
-    print("done loading the video")
-
-    coords_dict = {}
-    face_coords_dict = {}
-    vid_len = vid.length()   
-    for frame in tqdm(range(floor(vid_len*fps))):
-        from_img, has_frame = vid.get_frame(1/fps*frame*1000)
-
-        if (has_frame):
-            coords_dict[frame] = from_img.points
-            #saves face coords (rectangle) from one frame into a list, L R T B
-            fc_left = from_img.face.left()
-            fc_right = from_img.face.right()
-            fc_top = from_img.face.top()
-            fc_bottom = from_img.face.bottom()
-            fc_list = [fc_left, fc_right, fc_top, fc_bottom]
-            face_coords_dict[frame] = fc_list
-
-    obj = [coords_dict, face_coords_dict]
-
-    video_n = new_video.split('.')
-    file_path = './preprocess/preprocess_' + video_n[0] + '.txt'
-    with open(file_path, 'w') as out_file:
-        json.dump(obj, out_file)
-
-
 if __name__ == "__main__":
+    if not os.path.exists("output"):
+        try: 
+            os.makedirs("output")
+        except OSError as exc: # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+
+
     # read the image
     print("loading the image") 
     #change image name here
-    img_name = "to4.jpeg"                                
+    img_name = "to4.jpg"                                
     to_img = Image(cv2.imread(img_name))
     print("done loading the image")
 
     fps = 6
-    #change the name for new_video for every new video
-    new_video = "input.mov"
+    video_n = "input"
 
     img_n  = img_name.split('.')
-    video_n = new_video.split('.')
-
-    output_name = 'output_' + video_n[0] + '_' + img_n[0] + '.mp4'
+    output_name = './output/output_' + video_n + '_' + img_n[0] + '.mp4'
     out = cv2.VideoWriter(
         output_name, cv2.VideoWriter_fourcc(*'MP4V'), fps, to_img.size())
-
-    # preprocess video, uncomment for preprocessing new video
-    # preprocess_video(new_video, fps)
-
+ 
     #get coordinates for every frame
-    file_path = './preprocess/preprocess_' + video_n[0] + '.txt'
-    with open(file_path) as json_file:
+    json_path = './preprocess/preprocess_' + video_n + '.json'
+    with open(json_path) as json_file:
         data = json.load(json_file)
 
-    points, face_points = data[0], data[1]
-    anchor_points = copy.deepcopy(points['0'])
+    points, face_points = data["coords"], data["face"]
+    anchor_points = copy.deepcopy(points[0])
     
-    for i in points:
+    for i in range(len(points)):
         frame_img = to_img.apply(anchor_points, points[i], face_points[i])
         frame_img = (frame_img*255).astype(np.uint8)   # image depth set
         out.write(frame_img)
-    out.release()
-
+    out.release() 
+    print("done")
