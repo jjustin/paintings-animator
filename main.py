@@ -7,11 +7,14 @@ from skimage.transform import PiecewiseAffineTransform, warp
 from tqdm import tqdm
 from math import floor
 import json, os, copy, errno
+from flask import Flask
+app = Flask(__name__)
+
 
 N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
 FPS = 6
-SAFE_BORDER_SCALE=1.1
+SAFE_BORDER_SCALE=1.2
 
 predictor = dlib.shape_predictor(
     f"shape_predictor_{N_OF_LANDMARKS}_face_landmarks.dat")
@@ -189,7 +192,11 @@ def offset_from_anchor_point(frames):
                 y_diff_down = ydiff
     return (y_diff_up, y_diff_down,x_diff_left, x_diff_right)
 
-if __name__ == "__main__":
+@app.route("/images", methods=['GET'])
+def getImages():
+    return json.dumps(os.listdir("images"))    
+
+if __name__ == "__main__":    
     # Create output dir if it does not exist
     if not os.path.exists("output"):
         try: 
@@ -201,8 +208,8 @@ if __name__ == "__main__":
     # read the image
     print("loading the image") 
     # change image name here
-    img_name = "to4.jpg"                                
-    to_img = Image(cv2.imread(img_name))
+    img_name = "image5.jpg"                                
+    to_img = Image(cv2.imread("images/"+img_name))
     print("done loading the image")
 
     video_n = "input"
@@ -211,7 +218,7 @@ if __name__ == "__main__":
     img_n  = img_name.split('.')
     output_name = './output/output_' + video_n + '_' + img_n[0] + '.mp4'
     out = cv2.VideoWriter(
-        output_name, cv2.VideoWriter_fourcc("mp4v"), FPS, to_img.size())
+        output_name, cv2.VideoWriter_fourcc(*"mp4v"), FPS, to_img.size())
  
     #get coordinates for every frame
     json_path = './preprocess/preprocess_' + video_n + '.json'
@@ -227,5 +234,5 @@ if __name__ == "__main__":
         frame_img = to_img.apply(anchor_frames, frames[i], face_frames[i], unsafe_border)
         frame_img = (frame_img*255).astype(np.uint8)   # image depth set
         out.write(frame_img)
-    out.release() 
+    out.release()
     print("done")
