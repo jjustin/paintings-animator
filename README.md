@@ -7,5 +7,5 @@ https://github.com/mauckc/mouth-open
 # Run
 
 ```
-FLASK_APP=main.py FLASK_DEBUG=1 flask run
+python main.py
 ```

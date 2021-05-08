@@ -7,7 +7,10 @@ from skimage.transform import PiecewiseAffineTransform, warp
 from tqdm import tqdm
 from math import floor
 import json, os, copy, errno
-from flask import Flask
+from uuid import uuid4
+from threading import Thread
+
+from flask import Flask, send_from_directory, request, Response
 app = Flask(__name__)
 
 
@@ -15,6 +18,7 @@ N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
 FPS = 6
 SAFE_BORDER_SCALE=1.2
+VIDEOS = ["input", "input2"]
 
 predictor = dlib.shape_predictor(
     f"shape_predictor_{N_OF_LANDMARKS}_face_landmarks.dat")
@@ -194,9 +198,40 @@ def offset_from_anchor_point(frames):
 
 @app.route("/images", methods=['GET'])
 def getImages():
-    return json.dumps(os.listdir("images"))    
+    return json.dumps(os.listdir("images"))
 
-if __name__ == "__main__":    
+@app.route("/<path:path>", methods=['GET'])
+def getStatic(path):  
+    return send_from_directory('.', path)
+
+@app.route("/addImage", methods=['PUT'])
+def add_image():
+    if 'file' not in request.files:
+        print('No file part')
+        return Response(json.dumps({"error": "no file uploaded"}), status=400)
+    file = request.files['file']
+    # if user does not select file, browser also
+    # submit an empty part without filename
+    if file:
+        filename = str(uuid4()) + "." +file.filename.split(".")[-1]
+        file.save(os.path.join("images/processing", filename))
+
+        to_img = Image(cv2.imread("images/processing/"+filename))
+        if not to_img.containsFace:
+            return {"error": "no face detected"}
+        Thread(target=generate_all_videos, args=[to_img, filename]).start()
+        return {"response": "processing"}
+
+    print('File is empty')
+    return json.dumps({"error":"file is empty"})
+
+def generate_all_videos(to_img, img_name):
+    print("Starting video processing")
+    for video in VIDEOS:
+        Thread(target=generate_video, args=[video, to_img, img_name]).start()
+
+def generate_video(video_n, to_img, img_name):
+    print(f"Generating video from image {img_name} and video {video_n}")
     # Create output dir if it does not exist
     if not os.path.exists("output"):
         try: 
@@ -204,15 +239,6 @@ if __name__ == "__main__":
         except OSError as exc: # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
-
-    # read the image
-    print("loading the image") 
-    # change image name here
-    img_name = "image5.jpg"                                
-    to_img = Image(cv2.imread("images/"+img_name))
-    print("done loading the image")
-
-    video_n = "input"
 
     # create output object
     img_n  = img_name.split('.')
@@ -236,3 +262,6 @@ if __name__ == "__main__":
         out.write(frame_img)
     out.release()
     print("done")
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
