@@ -34,7 +34,6 @@ class Image:
         faces = detector(self.gray)
         self.contains_face = len(faces) != 0
         if(self.contains_face):
-            self.containsFace = True
             # face's data
             self.face = faces[0]
             self.landmarks = predictor(image=self.gray, box=self.face)
@@ -198,7 +197,9 @@ def offset_from_anchor_point(frames):
 
 @app.route("/images", methods=['GET'])
 def getImages():
-    return json.dumps(os.listdir("images"))
+    images = os.listdir("images")
+    images.remove("processing")
+    return json.dumps({"images": images, "processing": os.listdir("images/processing")})
 
 @app.route("/<path:path>", methods=['GET'])
 def getStatic(path):  
@@ -214,10 +215,12 @@ def add_image():
     # submit an empty part without filename
     if file:
         filename = str(uuid4()) + "." +file.filename.split(".")[-1]
-        file.save(os.path.join("images/processing", filename))
+        filepath = "images/processing/"+filename
+        file.save(filepath)
 
-        to_img = Image(cv2.imread("images/processing/"+filename))
-        if not to_img.containsFace:
+        to_img = Image(cv2.imread(filepath))
+        if not to_img.contains_face:
+            os.remove(filepath)
             return {"error": "no face detected"}
         Thread(target=handle_image_upload, args=[to_img, filename]).start()
         return {"response": "processing"}
