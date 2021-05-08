@@ -219,11 +219,15 @@ def add_image():
         to_img = Image(cv2.imread("images/processing/"+filename))
         if not to_img.containsFace:
             return {"error": "no face detected"}
-        Thread(target=generate_all_videos, args=[to_img, filename]).start()
+        Thread(target=handle_image_upload, args=[to_img, filename]).start()
         return {"response": "processing"}
 
     print('File is empty')
     return json.dumps({"error":"file is empty"})
+
+def handle_image_upload(to_img, img_name):
+    generate_all_videos(to_img, img_name)
+    os.rename(f"images/processing/{img_name}", f"images/{img_name}")
 
 def generate_all_videos(to_img, img_name):
     print("Starting video processing")
@@ -232,13 +236,6 @@ def generate_all_videos(to_img, img_name):
 
 def generate_video(video_n, to_img, img_name):
     print(f"Generating video from image {img_name} and video {video_n}")
-    # Create output dir if it does not exist
-    if not os.path.exists("output"):
-        try: 
-            os.makedirs("output")
-        except OSError as exc: # Guard against race condition
-            if exc.errno != errno.EEXIST:
-                raise
 
     # create output object
     img_n  = img_name.split('.')
@@ -257,11 +254,21 @@ def generate_video(video_n, to_img, img_name):
     unsafe_border = get_unsafe_border(frames, to_img)
 
     for i in tqdm(range(len(frames))):
-        frame_img = to_img.apply(anchor_frames, frames[i], face_frames[i], unsafe_border)
+        frame_img = to_img.apply(anchor_frames, frames[i], face_frames[i], unsafe_border) 
         frame_img = (frame_img*255).astype(np.uint8)   # image depth set
         out.write(frame_img)
     out.release()
     print("done")
 
 if __name__ == "__main__":
+    # Create required dirs if they do not exist
+    if not os.path.exists("output"):
+        try: 
+            os.makedirs("output")
+            os.makedirs("images")
+            os.makedirs("images/processing")
+        except OSError as exc: # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+
     app.run(host="0.0.0.0", port=5000, debug=True)
