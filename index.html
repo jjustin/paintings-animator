@@ -23,7 +23,7 @@
                         return await fetch("http://localhost:5000/images").then(response => response.json())
                     }
 
-                    async function myFunction() {
+                    async function loadImages() {
                         var obj = await getArray()
                         console.log(obj)
                         var arr = obj.images
@@ -40,7 +40,7 @@
                         }
                     }
 
-                    myFunction()
+                    loadImages()
 
                     document.querySelectorAll('#demo').forEach(function (el) {
                         el.addEventListener('click', function (e) {
@@ -74,22 +74,6 @@
         </div>
 
         <div id="video-picker">
-            <video class="source-video" autoplay="autoplay" muted loop>
-                <source src="izvorni_videi/video1.mp4" type="video/mp4">
-            </video>
-            <video class="source-video" autoplay="autoplay" muted loop>
-                <source src="izvorni_videi/video2.mp4" type="video/mp4">
-            </video>
-            <video class="source-video" autoplay="autoplay" muted loop>
-                <source src="izvorni_videi/video3.mp4" type="video/mp4">
-            </video>
-            <video class="source-video" autoplay="autoplay" muted loop>
-                <source src="izvorni_videi/video4.mp4" type="video/mp4">
-            </video>
-            <video class="source-video" autoplay="autoplay" muted loop>
-                <source src="izvorni_videi/video5.mp4" type="video/mp4">
-            </video>
-
             <!-- not done - change ids as the name of the corresponding video -->
             <input type="image" src="emoji/angry.png" name="angry" class="image2" id="angry" onclick="border(this)">
             <input type="image" src="emoji/sad.png" name="sad" class="image2" id="sad" onclick="border(this)">

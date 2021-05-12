@@ -309,16 +309,15 @@ def generate_video(video_n, to_img, img_name):
 
 if __name__ == "__main__":
     # Create required dirs if they do not exist
-    if not os.path.exists("output"):
-        try: 
+    try: 
+        if not os.path.exists("output"):
             os.makedirs("output")
+        if not os.path.exists("images"):
             os.makedirs("images")
+        if not os.path.exists("images/processing"):
             os.makedirs("images/processing")
-        except OSError as exc: # Guard against race condition
-            if exc.errno != errno.EEXIST:
-                raise
+    except OSError as exc: # Guard against race condition
+        if exc.errno != errno.EEXIST:
+            raise
 
-    # app.run(host="0.0.0.0", port=5000, debug=True)
-    img_n = "image2.jpg"
-    to_img = Image(cv2.imread("images/"+img_n))
-    generate_video("inputSurprise3", to_img, img_n)
+    app.run(host="0.0.0.0", port=5000, debug=True)
