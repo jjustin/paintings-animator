@@ -17,7 +17,8 @@ app = Flask(__name__)
 N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
 FPS = 6
-SAFE_BORDER_SCALE=1.2
+SAFE_BORDER_SCALE=1.05
+CENTER_POINT_IX=27
 VIDEOS = ["input", "input2"]
 
 predictor = dlib.shape_predictor(
@@ -69,15 +70,15 @@ class Image:
         return img
 
     # applies from_img's face landmarks to image
-    def apply(self, anchor_points, from_img_points, from_img_face_points, unsafe_border):
+    def apply(self, anchor_points, from_img_points, from_img_face_points, unsafe_border, draw_overlay=False):
         if not self.contains_face:
             return self.add_text("No face found", fontColor=(255, 0, 0))
 
         img = self.img.copy()
 
         # face's center
-        fx1, fy1 = from_img_points[27][0], from_img_points[27][1]
-        ax1, ay1 = anchor_points[27][0], anchor_points[27][1]
+        fx1, fy1 = from_img_points[CENTER_POINT_IX][0], from_img_points[CENTER_POINT_IX][1]
+        ax1, ay1 = anchor_points[CENTER_POINT_IX][0], anchor_points[CENTER_POINT_IX][1]
 
         # look at what changed in picture
         changes = [[(from_img_points[i][0] - fx1) + ax1 - anchor_points[i][0],
@@ -106,19 +107,66 @@ class Image:
         for i in range(N_OF_LANDMARKS):
             from_pts[i][0] = self.points[i][0] + x_scale*changes[i][0]  # x
             from_pts[i][1] = self.points[i][1] + y_scale*changes[i][1]  # y
-        border_points = unsafe_border.to_rect_points()
-        tform = PiecewiseAffineTransform()
-        tform.estimate(np.float32(from_pts+border_points+self.border),  # self.border has to be self, so that image does not compress
-                       np.float32(self.points+border_points+self.border))
-
-        img = warp(img, tform, output_shape=(self.rows, self.cols))
         
+        border_points = unsafe_border.to_points()
+        tform = PiecewiseAffineTransform()
+        final_points = from_pts+border_points+self.border # self.border has to be included, so that image does not collapse onto itself(black border)
+        start_points = self.points+border_points+self.border
+        tform.estimate(np.float32(final_points),  
+                       np.float32(start_points))
+
+        img = warp(img, tform, output_shape=(self.rows, self.cols), mode='reflect')
+        
+        if draw_overlay:
+            subdiv = cv2.Subdiv2D((0,0,img.shape[1],img.shape[0]))
+            for point in from_pts+border_points:
+                x,y = int(point[0]), int(point[1])
+                subdiv.insert((x,y))
+            draw_delaunay(img, subdiv, (255, 255, 255))
+
         # overwrite mouth
         if(mar > MOUTH_AR_THRESH):
             pts = np.int32(from_pts[60:68])
             cv2.fillPoly(img, [pts], (255, 255, 255))
        
         return img
+
+# Check if a point is inside a rectangle
+def rect_contains(rect, point) :
+    if point[0] < rect[0] :
+        return False
+    elif point[1] < rect[1] :
+        return False
+    elif point[0] > rect[2] :
+        return False
+    elif point[1] > rect[3] :
+        return False
+    return True
+
+
+# Draw delaunay triangles
+def draw_delaunay(img, subdiv, delaunay_color ) :
+    size = img.shape
+    y = size[0]
+    x = size[1]
+    r = (0, 0, x, y)
+    subdiv.insert((0,0))
+    subdiv.insert((x-1,0))
+    subdiv.insert((0,y-1))
+    subdiv.insert((x-1,y-1))
+    triangleList = subdiv.getTriangleList()
+
+    for t in triangleList :
+
+        pt1 = (t[0], t[1])
+        pt2 = (t[2], t[3])
+        pt3 = (t[4], t[5])
+
+        if rect_contains(r, pt1) and rect_contains(r, pt2) and rect_contains(r, pt3) :
+
+            cv2.line(img, pt1, pt2, delaunay_color, 1, cv2.LINE_AA, 0)
+            cv2.line(img, pt2, pt3, delaunay_color, 1, cv2.LINE_AA, 0)
+            cv2.line(img, pt3, pt1, delaunay_color, 1, cv2.LINE_AA, 0)
 
 class Video:
     def __init__(self, vid):
@@ -141,21 +189,17 @@ class UnsafeBorder:
         self._left = left
         self._right = right
 
-    def to_rect_points(self):
+    def to_points(self):
         return [
             [self._left, self._top],
             [self._right, self._top],
             [self._left, self._bottom],
-            [self._right, self._bottom]
+            [self._right, self._bottom],
+            [(self._right+self._left)//2, self._top],
+            [(self._right+self._left)//2, self._bottom],
+            [self._right, (self._bottom+self._top)//2],
+            [self._left, (self._bottom+self._top)//2],
         ]
-    def top(self): 
-        return self._top
-    def bottom(self): 
-        return self._bottom
-    def left(self): 
-        return self._left
-    def right(self): 
-        return self._right
 
 def get_unsafe_border(frames, to_img: Image):
     # get info on video data
@@ -169,10 +213,10 @@ def get_unsafe_border(frames, to_img: Image):
     right_scale = (from_right)/(anchor_right)
 
     return UnsafeBorder(
-     int(to_img.points[27][1] - top * top_scale *SAFE_BORDER_SCALE),
-     int(to_img.points[27][1] - bottom * bottom_scale *SAFE_BORDER_SCALE), 
-     int(to_img.points[27][0] - left * left_scale *SAFE_BORDER_SCALE), 
-     int(to_img.points[27][0] - right * right_scale *SAFE_BORDER_SCALE))
+     int(to_img.points[CENTER_POINT_IX][1] - top * top_scale *SAFE_BORDER_SCALE),
+     int(to_img.points[CENTER_POINT_IX][1] - bottom * bottom_scale *SAFE_BORDER_SCALE), 
+     int(to_img.points[CENTER_POINT_IX][0] - left * left_scale *SAFE_BORDER_SCALE), 
+     int(to_img.points[CENTER_POINT_IX][0] - right * right_scale *SAFE_BORDER_SCALE))
 
 def offset_from_anchor_point(frames):
     x_diff_left = float('-inf')
@@ -183,8 +227,8 @@ def offset_from_anchor_point(frames):
     # look over all frames, to find the highest and lowest points, that are still face affected
     for frame in frames:
         for point in frame:
-            xdiff = frame[27][0] - point[0]
-            ydiff = frame[27][1] - point[1]
+            xdiff = frame[CENTER_POINT_IX][0] - point[0]
+            ydiff = frame[CENTER_POINT_IX][1] - point[1]
             if(x_diff_left < xdiff):
                 x_diff_left = xdiff
             if(x_diff_right > xdiff):
@@ -257,7 +301,7 @@ def generate_video(video_n, to_img, img_name):
     unsafe_border = get_unsafe_border(frames, to_img)
 
     for i in tqdm(range(len(frames))):
-        frame_img = to_img.apply(anchor_frames, frames[i], face_frames[i], unsafe_border) 
+        frame_img = to_img.apply(anchor_frames, frames[i], face_frames[i], unsafe_border, draw_overlay = False) 
         frame_img = (frame_img*255).astype(np.uint8)   # image depth set
         out.write(frame_img)
     out.release()
@@ -274,4 +318,7 @@ if __name__ == "__main__":
             if exc.errno != errno.EEXIST:
                 raise
 
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # app.run(host="0.0.0.0", port=5000, debug=True)
+    img_n = "image2.jpg"
+    to_img = Image(cv2.imread("images/"+img_n))
+    generate_video("inputSurprise3", to_img, img_n)
