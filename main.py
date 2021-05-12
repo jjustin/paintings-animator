@@ -283,16 +283,16 @@ def generate_all_videos(to_img, img_name):
 def generate_video(video_n, to_img, img_name):
     print(f"Generating video from image {img_name} and video {video_n}")
 
-    # create output object
-    img_n  = img_name.split('.')
-    output_name = './output/output_' + video_n + '_' + img_n[0] + '.mp4'
-    out = cv2.VideoWriter(
-        output_name, cv2.VideoWriter_fourcc(*"mp4v"), FPS, to_img.size())
- 
     #get coordinates for every frame
     json_path = './preprocess/preprocess_' + video_n + '.json'
     with open(json_path) as json_file:
         data = json.load(json_file)
+
+    # create output object
+    img_n  = img_name.split('.')
+    output_name = './output/output_' + video_n + '_' + img_n[0] + '.mp4'
+    out = cv2.VideoWriter(
+        output_name, cv2.VideoWriter_fourcc(*"mp4v"), data["fps"], to_img.size())
 
     frames, face_frames = data["coords"], data["face"]
     anchor_frames = copy.deepcopy(frames[0])
