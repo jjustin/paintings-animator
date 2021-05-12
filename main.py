@@ -302,7 +302,7 @@ def generate_video(video_n, to_img, img_name):
     img_n  = img_name.split('.')
     output_name = './output/output_' + video_n + '_' + img_n[0] + '.mp4'
     out = cv2.VideoWriter(
-        output_name, cv2.VideoWriter_fourcc(*"H264"), data["fps"], to_img.size())
+        output_name, cv2.VideoWriter_fourcc(*"avc1"), data["fps"], to_img.size())
 
     frames, face_frames = data["coords"], data["face"]
     anchor_frames = copy.deepcopy(frames[0])
