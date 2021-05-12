@@ -18,7 +18,7 @@ N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
 SAFE_BORDER_SCALE=1.05
 CENTER_POINT_IX=27
-VIDEOS = ["input", "input2"]
+VIDEOS = [ "angry", "sad"]
 
 predictor = dlib.shape_predictor(
     f"shape_predictor_{N_OF_LANDMARKS}_face_landmarks.dat")
@@ -244,9 +244,14 @@ def getImages():
     images.remove("processing")
     return json.dumps({"images": images, "processing": os.listdir("images/processing")})
 
+@app.route('/', defaults={'path': 'index.html'}, methods=['GET'])
 @app.route("/<path:path>", methods=['GET'])
-def getStatic(path):  
+def getStatic(path):
     return send_from_directory('.', path)
+    
+@app.route('/exists/<path:image>', methods=['GET'])
+def getExists(image):
+    return json.dumps(os.path.isfile("./images/"+image))
 
 @app.route("/addImage", methods=['PUT'])
 def add_image():
@@ -266,7 +271,7 @@ def add_image():
             os.remove(filepath)
             return {"error": "no face detected"}
         Thread(target=handle_image_upload, args=[to_img, filename]).start()
-        return {"response": "processing"}
+        return {"response": "processing", "img_name": filename}
 
     print('File is empty')
     return json.dumps({"error":"file is empty"})
@@ -277,8 +282,13 @@ def handle_image_upload(to_img, img_name):
 
 def generate_all_videos(to_img, img_name):
     print("Starting video processing")
+    threads = []
     for video in VIDEOS:
-        Thread(target=generate_video, args=[video, to_img, img_name]).start()
+        t = Thread(target=generate_video, args=[video, to_img, img_name])
+        t.start()
+        threads.append(t)
+    for t in threads:
+        t.join()
 
 def generate_video(video_n, to_img, img_name):
     print(f"Generating video from image {img_name} and video {video_n}")
@@ -292,7 +302,7 @@ def generate_video(video_n, to_img, img_name):
     img_n  = img_name.split('.')
     output_name = './output/output_' + video_n + '_' + img_n[0] + '.mp4'
     out = cv2.VideoWriter(
-        output_name, cv2.VideoWriter_fourcc(*"mp4v"), data["fps"], to_img.size())
+        output_name, cv2.VideoWriter_fourcc(*"H264"), data["fps"], to_img.size())
 
     frames, face_frames = data["coords"], data["face"]
     anchor_frames = copy.deepcopy(frames[0])
