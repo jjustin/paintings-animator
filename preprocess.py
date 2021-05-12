@@ -1,8 +1,10 @@
-from main import Image, Video, FPS
+from main import Image, Video
 import cv2
 from tqdm import tqdm
 from math import floor
 import json,os, errno
+
+FPS = 24
 
 def preprocess_video(new_video, fps):
     #read the video
@@ -29,7 +31,7 @@ def preprocess_video(new_video, fps):
         else:
             coords.append()
 
-    obj = {"coords":coords, "face":face_coords}
+    obj = {"coords":coords, "face":face_coords, "fps": fps}
 
     video_n = new_video.split('.')
     file_path = './preprocess/preprocess_' + video_n[0] + '.json'

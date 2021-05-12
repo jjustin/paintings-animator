@@ -16,7 +16,6 @@ app = Flask(__name__)
 
 N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
-FPS = 6
 SAFE_BORDER_SCALE=1.05
 CENTER_POINT_IX=27
 VIDEOS = ["input", "input2"]
