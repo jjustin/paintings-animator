@@ -1,0 +1,121 @@
+html,
+body {
+  background-color: lightblue;
+  height: 100%;
+  width: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  margin: 5px;
+}
+
+#container {
+  display: grid;
+  grid-template-areas:
+    "result image-picker image-picker"
+    "result image-picker image-picker"
+    "video-picker video-picker video-picker";
+  height: 100%;
+  grid-template-rows: auto auto minmax(15%, 25%);
+  grid-template-columns: 30% auto auto;
+}
+
+#result {
+  display: flex;
+  align-items: center;
+  grid-area: result;
+  background-color: rgb(25, 25, 25);
+  border-radius: 10px;
+  margin: 27px;
+}
+
+.result-video {
+  background-size: 100% 100%;
+  width: 100%;
+  border-radius: 10px;
+}
+
+#video-picker {
+  display: flex;
+  grid-area: video-picker;
+  border-radius: 10px;
+  overflow: scroll;
+  direction: ltr;
+  background-color: whitesmoke;
+  margin: 27px;
+}
+
+.source-video {
+  width: 30%;
+  height: auto;
+  background-color: whitesmoke;
+}
+
+#image-picker {
+  grid-area: image-picker;
+  display: flex;
+  flex-wrap: wrap;
+  background-color: whitesmoke;
+  padding: 12px 24px;
+  border-radius: 10px;
+  overflow: scroll;
+  margin: 27px;
+  align-items: center;
+}
+
+.image {
+  border-radius: 30px;
+  margin: 2.5%;
+  vertical-align: middle;
+  min-width: 20%;
+  max-width: 500px;
+  height: auto;
+  /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4), 0 6px 20px 0 rgba(0, 0, 0, 0.4); */
+  cursor: pointer;
+}
+
+.emojiImage,
+.image {
+  transition: 0.5s;
+}
+
+.emojiImage:hover,
+.image:hover,
+.selected {
+  filter: drop-shadow(0 0 0.75rem rgb(0, 0, 0));
+  transition: 0.5s;
+}
+
+.emojiImage {
+  display: flex;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  margin-right: 20px;
+  margin-left: 40px;
+}
+.emojiImage:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+#addImage {
+  display: inline;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  font-family: "Lucida Console", monospace;
+  font-size: 90px;
+  color: rgb(100, 100, 100);
+}
+#demo {
+  display: inline;
+}
+
+.processing {
+  border-radius: 30px;
+  margin: 2.5%;
+  vertical-align: middle;
+  width: 20%;
+  height: auto;
+  opacity: 0.2;
+}
