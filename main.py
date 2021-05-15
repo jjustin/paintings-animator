@@ -242,6 +242,7 @@ def offset_from_anchor_point(frames):
 def getImages():
     images = os.listdir("images")
     images.remove("processing")
+    images.remove(".DS_Store") #lahko pobirsemo na koncu
     return json.dumps({"images": images, "processing": os.listdir("images/processing")})
 
 @app.route('/', defaults={'path': 'index.html'}, methods=['GET'])

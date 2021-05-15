@@ -5,7 +5,7 @@ body {
   width: 100%;
   max-height: 100%;
   max-width: 100%;
-  margin: 5px;
+  margin: 0px;
 }
 
 #container {
@@ -15,23 +15,26 @@ body {
     "result image-picker image-picker"
     "video-picker video-picker video-picker";
   height: 100%;
-  grid-template-rows: auto auto minmax(15%, 25%);
-  grid-template-columns: 30% auto auto;
+  grid-template-rows: 40% 40% 20%;
+  grid-template-columns: 40% auto auto;
 }
 
 #result {
   display: flex;
   align-items: center;
+  justify-content: center;
   grid-area: result;
-  background-color: rgb(25, 25, 25);
+  background-color: lightblue;
   border-radius: 10px;
-  margin: 27px;
+  margin: 20px;
 }
 
 .result-video {
   background-size: 100% 100%;
   width: 100%;
-  border-radius: 10px;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 20px;
 }
 
 #video-picker {
@@ -41,7 +44,7 @@ body {
   overflow: scroll;
   direction: ltr;
   background-color: whitesmoke;
-  margin: 27px;
+  margin: 20px;
 }
 
 .source-video {
@@ -58,7 +61,7 @@ body {
   padding: 12px 24px;
   border-radius: 10px;
   overflow: scroll;
-  margin: 27px;
+  margin: 20px;
   align-items: center;
 }
 
@@ -67,8 +70,9 @@ body {
   margin: 2.5%;
   vertical-align: middle;
   min-width: 20%;
-  max-width: 500px;
+  max-width: 200px;
   height: auto;
+  max-height: 250px;
   /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4), 0 6px 20px 0 rgba(0, 0, 0, 0.4); */
   cursor: pointer;
 }
@@ -87,9 +91,9 @@ body {
 
 .emojiImage {
   display: flex;
-  margin-top: 12px;
-  margin-bottom: 12px;
-  margin-right: 20px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  margin-right: 15px;
   margin-left: 40px;
 }
 .emojiImage:focus {
@@ -106,9 +110,32 @@ body {
   font-family: "Lucida Console", monospace;
   font-size: 90px;
   color: rgb(100, 100, 100);
+  min-width: 20%;
+  max-width: 500px;
 }
 #demo {
   display: inline;
+}
+
+.image-container {
+  position: relative;
+  width: 50%;
+  max-width: 300px;
+}
+
+.overlay {
+  position: absolute;
+  bottom: 0;
+  background: rgb(0, 0, 0);
+  background: rgba(0, 0, 0, 0.5); /* Black see-through */
+  color: #f1f1f1;
+  width: 100%;
+  transition: 0.5s ease;
+  opacity: 0;
+  color: white;
+  font-size: 20px;
+  padding: 20px;
+  text-align: center;
 }
 
 .processing {
@@ -118,4 +145,33 @@ body {
   width: 20%;
   height: auto;
   opacity: 0.2;
+}
+
+@media only screen and (max-width: 600px) {
+  #container {
+    display: grid;
+    grid-template-areas:
+      "result result result"
+      "image-picker image-picker image-picker"
+      "video-picker video-picker video-picker";
+    height: 100%;
+    width: 100%;
+    grid-template-rows: 55% 30% 15%;
+  }
+
+  #image-picker {
+    padding: 12px 0px;
+  }
+  .image {
+    max-width: 150px;
+  }
+  #addImage {
+    max-width: 150px;
+  }
+  .result-video {
+    width: auto;
+    height: auto;
+    align-self: center;
+    justify-self: center;
+  }
 }
