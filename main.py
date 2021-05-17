@@ -241,11 +241,13 @@ def offset_from_anchor_point(frames):
 @app.route("/images", methods=['GET'])
 def getImages():
     images = os.listdir("images")
-    images.remove("processing")
-    images.remove(".DS_Store") #lahko pobirsemo na koncu
+    if("processing" in images):
+        images.remove("processing")
+    if(".DS_Store" in images):
+        images.remove(".DS_Store")
     return json.dumps({"images": images, "processing": os.listdir("images/processing")})
 
-@app.route('/', defaults={'path': 'index.html'}, methods=['GET'])
+@app.route('/', defaults={'path': 'index_additive.html'}, methods=['GET'])
 @app.route("/<path:path>", methods=['GET'])
 def getStatic(path):
     return send_from_directory('.', path)

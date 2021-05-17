@@ -71,8 +71,7 @@ body {
   vertical-align: middle;
   min-width: 20%;
   max-width: 200px;
-  height: auto;
-  max-height: 250px;
+  height: 250px;
   /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4), 0 6px 20px 0 rgba(0, 0, 0, 0.4); */
   cursor: pointer;
 }
@@ -142,8 +141,8 @@ body {
   border-radius: 30px;
   margin: 2.5%;
   vertical-align: middle;
-  width: 20%;
-  height: auto;
+  max-width: 200px;
+  height: 250px;
   opacity: 0.2;
 }
 

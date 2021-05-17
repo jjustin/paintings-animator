@@ -13,21 +13,19 @@
 <body>
     <div id="container">
         <div id="image-picker">
-            <!-- <div class="image" id="addImage">+</div> -->
+            <div class="image" id="addImage">+</div>
 
             <script>
-                /*async function getArray() {
+                async function getArray() {
                     return await fetch("http://localhost:5000/images").then(response => response.json())
-                }*/
+                }
 
                 async function loadImages() {
-                    //var obj = await getArray()
-                    //console.log(obj)
-                    var arr = ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg", "image6.jpg", "image7.jpg", "image8.jpg", "image9.jpg", "image10.jpg", "image11.jpg", "image12.jpg", "image13.jpg", "image14.jpg", "image15.jpg"]
-                    //var arr = obj.images
-                    //var processing = obj.processing 
+                    var obj = await getArray()
+                    var arr = obj.images
+                    var processing = obj.processing
 
-                    /*for (img of processing) {
+                    for (img of processing) {
                         const image = document.createElement('img')
                         image.src = '/images/processing/' + img
                         image.classList.add("processing")
@@ -53,7 +51,7 @@
                             }
                         }
                         setTimeout(checkForChange, 5000)
-                    }*/
+                    }
 
                     for (img of arr) {
                         const image = document.createElement('img')
