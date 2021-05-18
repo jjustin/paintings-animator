@@ -85,9 +85,27 @@ if __name__ == "__main__":
             if exc.errno != errno.EEXIST:
                 raise
 
-    video_file_name= "input.mov" 
+    # video_file_name= "katja_scared.mp4" 
 
-    preprocess_video(video_file_name, FPS)
+    # preprocess_video(video_file_name, FPS)
 
-    to_img = Image(cv2.imread("working_images/image2.jpg"))
-    generate_video("input", to_img, "test")
+    # to_img = Image(cv2.imread("images/image13.jpg"))
+    # generate_video("katja_scared", to_img, "image13")
+
+   
+    # emojis = ["inputAnger3", "inputHappiness", "tajda_sad", "katja_sleepy", "inputSmirk", "tajda_flirty", "katja_suspicious"]
+    # imgs = ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg", "image6.jpg",
+    # "image7.jpg", "image8.jpg", "image9.jpg", "image10.jpg", "image11.jpg", "image12.jpg",
+    # "image13.jpg", "image14.jpg", "image15.jpg"]
+
+    # imgs = ["image1.jpg", "image2.jpg", "image4.jpg", "image5.jpg", "image6.jpg",         #leva smirk
+    # "image7.jpg", "image8.jpg", "image9.jpg", "image10.jpg", "image11.jpg",
+    # "image15.jpg"]
+
+    # imgs = ["image3.jpg", "image12.jpg"]      #desna smirk
+
+    # for img in imgs:
+    #     to_img = Image(cv2.imread("images/" + img))
+    #     for emoji in emojis:
+    #         img_n = img.split('.')
+    #         generate_video(emoji, to_img, img_n[0])
