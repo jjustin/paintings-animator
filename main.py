@@ -18,7 +18,7 @@ N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
 SAFE_BORDER_SCALE=1.05
 CENTER_POINT_IX=27
-VIDEOS = [ "inputAnger3", "inputSad3", "inputHappiness", "inputSleepy4", "inputSmirk", "inputSurprise5"]
+VIDEOS = [ "inputAnger3", "tajda_sad", "inputHappiness", "inputSleepy4", "inputSmirk", "inputSurprise5", "katja_suspicious"]
 
 predictor = dlib.shape_predictor(
     f"shape_predictor_{N_OF_LANDMARKS}_face_landmarks.dat")
