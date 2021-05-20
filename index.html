@@ -23,18 +23,17 @@
                 async function loadImages() {
                     //var obj = await getArray()
                     //console.log(obj)
-                    var arr = [{src: "image1.jpg",title: "Maurice Quentin de La Tour, Self-portrait, 1751"}, 
+                    var arr = [{src: "image12.jpg",title: "Leonardo da Vinci, “Mona Lisa”, 1503"},
+                                {src: "image1.jpg",title: "Maurice Quentin de La Tour, Self-portrait, 1751"}, 
                                 {src: "image2.jpg",title: "Aleksey Antropov, Self-portrait, 1784"},
                                 {src: "image3.jpg",title: "George Romney, “Captain John Taubman III”, 1799"},
                                 {src: "image4.jpg",title: "Barbara Longhi, “St. Catherine of Alexandria”, 1589"},
                                 {src: "image5.jpg",title: "Jan Gossaert, Self-portrait, 1515"},
-                                {src: "image6.jpg",title: "Jan Lievens, Self-portrait, 1630"},
                                 {src: "image7.jpg",title: "Rosalba Carriera, “Self-portrait holding a portrait of her sister”, 1715"},
                                 {src: "image8.jpg",title: "Ivan Nikitin, “Portrait of Andrei Nartov"},
                                 {src: "image9.jpg",title: "Joseph Duplessis, Self-portrait, 1801"},
                                 {src: "image10.jpg",title: "Marcello Bacciarelli, Self-portrait, 1790"},
                                 {src: "image11.jpg",title: "Thomas Gainsborough, “Woman in Blue”, 1770"},
-                                {src: "image12.jpg",title: "Leonardo da Vinci, “Mona Lisa”, 1503"},
                                 {src: "image13.jpg",title: "Johannes Vermee, “Girl with a pearl earing”, 1665"},
                                 {src: "image14.jpg",title: "Frida Kahlo, “Self-Portrait with Thorn Necklace and Hummingbird”, 1940"},
                                 {src: "image15.jpg",title: "Jean-Auguste-Dominique Ingres, “Self-portrait at the age of 24”, 1804"},   
@@ -111,7 +110,7 @@
                     var description = document.getElementById("description")
                     console.log(description)
                     if (selected_emoji == '') {
-                        description.innerHTML = "Sedaj izberi emotikon"
+                        description.innerHTML = "Sedaj izberi še emotikon"
                     }
                     else {
                         description.innerHTML = image.imageTitle
@@ -193,7 +192,7 @@
                     var description = document.getElementById("description")
                     console.log(description)
                     if (selected_img == '') {
-                        description.innerHTML = "Sedaj izberi sliko"
+                        description.innerHTML = "Sedaj izberi še sliko"
                     }
                     else {
                         description.innerHTML = document.getElementById(selected_img).imageTitle
