@@ -29,7 +29,8 @@ body {
   text-align: center;
   color: grey;
   font-size: 2vw;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
   padding: 50px;
 }
 
