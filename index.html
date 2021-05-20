@@ -23,7 +23,23 @@
                 async function loadImages() {
                     //var obj = await getArray()
                     //console.log(obj)
-                    var arr = [ "image12.jpg", "image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg", "image7.jpg", "image8.jpg", "image9.jpg", "image10.jpg", "image11.jpg", "image13.jpg", "image14.jpg", "image15.jpg"]
+                    var arr = [{src: "image1.jpg",title: "Maurice Quentin de La Tour, Self-portrait, 1751"}, 
+                                {src: "image2.jpg",title: "Aleksey Antropov, Self-portrait, 1784"},
+                                {src: "image3.jpg",title: "George Romney, “Captain John Taubman III”, 1799"},
+                                {src: "image4.jpg",title: "Barbara Longhi, “St. Catherine of Alexandria”, 1589"},
+                                {src: "image5.jpg",title: "Jan Gossaert, Self-portrait, 1515"},
+                                {src: "image6.jpg",title: "Jan Lievens, Self-portrait, 1630"},
+                                {src: "image7.jpg",title: "Rosalba Carriera, “Self-portrait holding a portrait of her sister”, 1715"},
+                                {src: "image8.jpg",title: "Ivan Nikitin, “Portrait of Andrei Nartov"},
+                                {src: "image9.jpg",title: "Joseph Duplessis, Self-portrait, 1801"},
+                                {src: "image10.jpg",title: "Marcello Bacciarelli, Self-portrait, 1790"},
+                                {src: "image11.jpg",title: "Thomas Gainsborough, “Woman in Blue”, 1770"},
+                                {src: "image12.jpg",title: "Leonardo da Vinci, “Mona Lisa”, 1503"},
+                                {src: "image13.jpg",title: "Johannes Vermee, “Girl with a pearl earing”, 1665"},
+                                {src: "image14.jpg",title: "Frida Kahlo, “Self-Portrait with Thorn Necklace and Hummingbird”, 1940"},
+                                {src: "image15.jpg",title: "Jean-Auguste-Dominique Ingres, “Self-portrait at the age of 24”, 1804"},   
+                    ]
+                    //var arr = [ "image12.jpg", "image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg", "image7.jpg", "image8.jpg", "image9.jpg", "image10.jpg", "image11.jpg", "image13.jpg", "image14.jpg", "image15.jpg"]
                     //var arr = obj.images
                     //var processing = obj.processing 
 
@@ -55,13 +71,14 @@
                         setTimeout(checkForChange, 5000)
                     }*/
 
-                    for (img of arr) {
+                    for ({src, title} of arr) {
                         const image = document.createElement('img')
-                        image.src = 'images/' + img
+                        image.src = 'images/' + src
                         image.classList.add("image")
-                        img_n = img.split('.')
+                        img_n = src.split('.')
                         image.id = img_n[0]
                         image.name = img_n[0]
+                        image.imageTitle = title
 
                         document.querySelector('#image-picker').appendChild(image)
                     }
@@ -84,6 +101,7 @@
                 onImageClick = (image) => {
                     var exSelectedImages = document.getElementsByClassName("image selected")
                     // Remove selected class
+                   
                     for (let item of exSelectedImages) {
                         item.classList.remove("selected")
                     }
@@ -96,7 +114,7 @@
                         description.innerHTML = "Sedaj izberi emotikon"
                     }
                     else {
-                        description.innerHTML = "OPIS SLIKE"
+                        description.innerHTML = image.imageTitle
                     }
 
                     let overlay = document.createElement('div')
@@ -178,7 +196,7 @@
                         description.innerHTML = "Sedaj izberi sliko"
                     }
                     else {
-                        description.innerHTML = "OPIS SLIKE"
+                        description.innerHTML = document.getElementById(selected_img).imageTitle
                     }
 
                     changeVideo()
@@ -188,6 +206,7 @@
         </div>
 
         <div id="result">
+            <div id="img-title"></div>
             <video class="result-video" id="video" controls="false" style="visibility: hidden;">
                 <source id="source" src="" type="video/mp4">
             </video>
