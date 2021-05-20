@@ -60,7 +60,7 @@ body {
   overflow: scroll;
   direction: ltr;
   background-color: whitesmoke;
-  margin: 50px;
+  margin: 20px;
 }
 
 .source-video {
@@ -77,7 +77,7 @@ body {
   padding: 12px 24px;
   border-radius: 10px;
   overflow: scroll;
-  margin: 50px;
+  margin: 20px;
   align-items: center;
 }
 
@@ -105,10 +105,10 @@ body {
 
 .emojiImage {
   display: flex;
-  margin-top: 70px;
-  margin-bottom: 70px;
-  margin-right: 70px;
-  margin-left: 100px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-right: 20px;
+  margin-left: 40px;
 }
 .emojiImage:focus {
   outline: none;
