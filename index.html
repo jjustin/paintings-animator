@@ -90,6 +90,15 @@
                     image.classList.add("selected")
                     selected_img = image.id
 
+                    var description = document.getElementById("description")
+                    console.log(description)
+                    if (selected_emoji == '') {
+                        description.innerHTML = "Sedaj izberi emotikon"
+                    }
+                    else {
+                        description.innerHTML = "OPIS SLIKE"
+                    }
+
                     let overlay = document.createElement('div')
                     overlay.classList.add("overlay")
                     overlay.innerHTML = "Selected"
@@ -130,7 +139,6 @@
 
         <div id="video-picker">
             <!-- not done - change ids as the name of the corresponding video -->
-            <input type="image" src="emoji/angry.png" name="angry" class="emojiImage" id="inputAnger3" onclick="selectEmoji(this)">
             <input type="image" src="emoji/sad.png" name="sad" class="emojiImage" id="tajda_sad" onclick="selectEmoji(this)">
             <input type="image" src="emoji/flirty.png" name="flirty" class="emojiImage" id="tajda_flirty" onclick="selectEmoji(this)">
             <input type="image" src="emoji/happy.png" name="happy" class="emojiImage" id="inputHappiness" onclick="selectEmoji(this)">
@@ -164,6 +172,15 @@
                     emoji.classList.add("selected")
                     selected_emoji = emoji.id
 
+                    var description = document.getElementById("description")
+                    console.log(description)
+                    if (selected_img == '') {
+                        description.innerHTML = "Sedaj izberi sliko"
+                    }
+                    else {
+                        description.innerHTML = "OPIS SLIKE"
+                    }
+
                     changeVideo()
                 }
 
@@ -175,6 +192,11 @@
                 <source id="source" src="output/video1.mp4" type="video/mp4">
             </video>
         </div>
+
+        <div id="description">
+            Izberi sliko ali emotikon
+        </div>
+
     </div>
 </body>
 

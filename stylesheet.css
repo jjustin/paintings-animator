@@ -13,10 +13,24 @@ body {
   grid-template-areas:
     "result image-picker image-picker"
     "result image-picker image-picker"
-    "video-picker video-picker video-picker";
+    "description video-picker video-picker";
   height: 100%;
   grid-template-rows: 40% 40% 20%;
   grid-template-columns: 40% auto auto;
+}
+
+#description {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-area: description;
+  margin: 25px;
+  border-radius: 10px;
+  text-align: center;
+  color: grey;
+  font-size: 2vw;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 50px;
 }
 
 #result {
@@ -44,7 +58,7 @@ body {
   overflow: scroll;
   direction: ltr;
   background-color: whitesmoke;
-  margin: 20px;
+  margin: 25px;
 }
 
 .source-video {
@@ -71,7 +85,6 @@ body {
   vertical-align: middle;
   min-width: 20%;
   max-width: 200px;
-  height: 250px;
   /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4), 0 6px 20px 0 rgba(0, 0, 0, 0.4); */
   cursor: pointer;
 }
