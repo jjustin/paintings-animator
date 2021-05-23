@@ -139,12 +139,18 @@
 
         <div id="video-picker">
             <!-- not done - change ids as the name of the corresponding video -->
-            <input type="image" src="emoji/sad.png" name="sad" class="emojiImage" id="tajda_sad" onclick="selectEmoji(this)">
-            <input type="image" src="emoji/flirty.png" name="flirty" class="emojiImage" id="tajda_flirty" onclick="selectEmoji(this)">
-            <input type="image" src="emoji/happy.png" name="happy" class="emojiImage" id="katja_happy" onclick="selectEmoji(this)">
-            <input type="image" src="emoji/smirk.png" name="smirk" class="emojiImage" id="katja_smirk" onclick="selectEmoji(this)">
-            <input type="image" src="emoji/sleepy.png" name="sleepy" class="emojiImage" id="katja_sleepy" onclick="selectEmoji(this)">
-            <input type="image" src="emoji/suspicious.png" name="suspicious" class="emojiImage" id="katja_suspicious" onclick="selectEmoji(this)">
+            <input type="image" src="emoji/sad.png" name="sad" class="emojiImage" id="tajda_sad"
+                onclick="selectEmoji(this)">
+            <input type="image" src="emoji/flirty.png" name="flirty" class="emojiImage" id="tajda_flirty"
+                onclick="selectEmoji(this)">
+            <input type="image" src="emoji/happy.png" name="happy" class="emojiImage" id="katja_happy"
+                onclick="selectEmoji(this)">
+            <input type="image" src="emoji/smirk.png" name="smirk" class="emojiImage" id="katja_smirk"
+                onclick="selectEmoji(this)">
+            <input type="image" src="emoji/sleepy.png" name="sleepy" class="emojiImage" id="katja_sleepy"
+                onclick="selectEmoji(this)">
+            <input type="image" src="emoji/suspicious.png" name="suspicious" class="emojiImage" id="katja_suspicious"
+                onclick="selectEmoji(this)">
 
             <script>
                 var selected_img = ''
@@ -156,7 +162,7 @@
                         var output = document.getElementById("video")
                         var source = document.getElementById("source")
 
-                        // output.pause()
+                        video.style.visibility = "visible"
                         source.src = "output/output_" + selected_emoji + "_" + selected_img + ".mp4"
                         output.load()
                         output.play()
@@ -187,8 +193,9 @@
         </div>
 
         <div id="result">
-            <video class="result-video" autoplay="autoplay" id="video" muted loop>
-                <source id="source" src="output/video1.mp4" type="video/mp4">
+            <div id="img-title"></div>
+            <video class="result-video" id="video" controls="false" style="visibility: hidden;">
+                <source id="source" src="" type="video/mp4">
             </video>
         </div>
 
