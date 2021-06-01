@@ -29,7 +29,7 @@ body {
   text-align: center;
   color: grey;
   font-size: 2vw;
-  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
   font-weight: bold;
   padding: 50px;
 }
@@ -109,6 +109,8 @@ body {
   margin-bottom: 20px;
   margin-right: 20px;
   margin-left: 40px;
+  object-fit: contain;
+  max-width: 15%;
 }
 .emojiImage:focus {
   outline: none;
@@ -166,11 +168,19 @@ body {
     display: grid;
     grid-template-areas:
       "result result result"
+      "description description description"
       "image-picker image-picker image-picker"
       "video-picker video-picker video-picker";
     height: 100%;
     width: 100%;
-    grid-template-rows: 55% 30% 15%;
+    grid-template-rows: 50% 5% 30% 15%;
+  }
+
+  #description {
+    margin: 0px;
+    font-size: 4vw;
+    border-radius: 0px;
+    padding: 0px;
   }
 
   #image-picker {
@@ -187,5 +197,14 @@ body {
     height: auto;
     align-self: center;
     justify-self: center;
+  }
+  .emojiImage {
+    margin: 0px;
+    margin-right: 10px;
+    margin-left: 10px;
+  }
+  #video-picker,
+  #image-picker {
+    margin: 5px;
   }
 }
