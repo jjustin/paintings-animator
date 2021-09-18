@@ -41,8 +41,10 @@ def preprocess_video(new_video, fps):
     obj = {"coords":coords, "face":face_coords, "fps": fps}
     
     # # Creates video output of detected points
-    draw_points(vid.get_frame(0)[0].img,coords, (int(vid.vid.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vid.vid.get(cv2.CAP_PROP_FRAME_HEIGHT))))
+    draw_points(vid.get_frame(0)[0].img, coords, (int(vid.vid.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vid.vid.get(cv2.CAP_PROP_FRAME_HEIGHT))))
     
+    draw_vectors(vid.get_frame(0)[0].img, coords, (int(vid.vid.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vid.vid.get(cv2.CAP_PROP_FRAME_HEIGHT))))
+
     video_n = new_video.split('.')
     file_path = './preprocess/preprocess_' + video_n[0] + '.json'
     with open(file_path, 'w') as out_file:
@@ -73,7 +75,20 @@ def draw_points(bg, frames, size):
         i = bg.copy()
         cv2.rectangle(i, (0,0), size, (0,0,0), thickness=-1)
         for point in frame:
-            cv2.circle(i, (point[0], point[1]), radius=2,color=(0,0,255), thickness=-1)
+            cv2.circle(i, (point[0], point[1]), radius=2,color=(0,0,255), thickness=8)
+        out.write(i)
+    out.release()
+
+def draw_vectors(bg, frames, size):
+    out = cv2.VideoWriter("vectors.mp4", cv2.VideoWriter_fourcc(*"avc1"), FPS, size)
+
+    for frame in frames:
+        i = bg.copy()
+        cv2.rectangle(i, (0,0), size, (0,0,0), thickness=-1)
+        for j  in range(len(frame)):
+            cv2.arrowedLine(i, (frame[j][0], frame[j][1]), (frames[0][j][0], frames[0][j][1]), color=(0,0,255), thickness=5)
+            cv2.circle(i, (frame[j][0], frame[j][1]), radius=2,color=(0,0,255), thickness=8)
+            cv2.circle(i, (frames[0][j][0], frames[0][j][1]), radius=2,color=(0,255,0), thickness=8)
         out.write(i)
     out.release()
 
@@ -85,27 +100,6 @@ if __name__ == "__main__":
             if exc.errno != errno.EEXIST:
                 raise
 
-    # video_file_name= "katja_scared.mp4" 
+    video_file_name= "faceMove.mp4" 
 
-    # preprocess_video(video_file_name, FPS)
-
-    # to_img = Image(cv2.imread("images/image13.jpg"))
-    # generate_video("katja_scared", to_img, "image13")
-
-   
-    # emojis = ["inputAnger3", "inputHappiness", "tajda_sad", "katja_sleepy", "inputSmirk", "tajda_flirty", "katja_suspicious"]
-    # imgs = ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg", "image6.jpg",
-    # "image7.jpg", "image8.jpg", "image9.jpg", "image10.jpg", "image11.jpg", "image12.jpg",
-    # "image13.jpg", "image14.jpg", "image15.jpg"]
-
-    # imgs = ["image1.jpg", "image2.jpg", "image4.jpg", "image5.jpg", "image6.jpg",         #leva smirk
-    # "image7.jpg", "image8.jpg", "image9.jpg", "image10.jpg", "image11.jpg",
-    # "image15.jpg"]
-
-    # imgs = ["image3.jpg", "image12.jpg"]      #desna smirk
-
-    # for img in imgs:
-    #     to_img = Image(cv2.imread("images/" + img))
-    #     for emoji in emojis:
-    #         img_n = img.split('.')
-    #         generate_video(emoji, to_img, img_n[0])
+    preprocess_video(video_file_name, FPS)
