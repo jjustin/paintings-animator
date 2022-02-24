@@ -1,0 +1,128 @@
+<!-- Tried to do wrap in js -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="container">
+        <video class="input_video"></video>
+        <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+        <canvas class="output_image_canvas" width="1280px" height="720px"></canvas>
+
+    </div>
+</body>
+
+<script type="module">
+    import { Homography } from "https://cdn.jsdelivr.net/gh/Eric-Canas/Homography.js@1.4/Homography.js";
+
+    const videoElement = document.getElementsByClassName('input_video')[0];
+    const camCanvasElement = document.getElementsByClassName('output_canvas')[0];
+    const camCanvasCtx = camCanvasElement.getContext('2d');
+    const canvasElement = document.getElementsByClassName('output_image_canvas')[0];
+    const canvasCtx = canvasElement.getContext('2d');
+    const monalisaurl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/800px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg"
+
+    const img = new Image();
+    img.src = monalisaurl
+    img.setAttribute('crossOrigin', '');
+
+    function imagedata_to_image(imagedata) {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        canvas.width = imagedata.width;
+        canvas.height = imagedata.height;
+        ctx.putImageData(imagedata, 0, 0);
+
+        var image = new Image();
+        image.src = canvas.toDataURL();
+        return image;
+    }
+    var X = 2
+    var time = 0
+    function onResults(results) {
+        // var time2 = Date.now()
+        // var diff = time2 - time
+        // if (diff < 1000) {
+        //     return
+        // }
+
+        // time = time2
+        time += 1
+        time = time % X
+        console.log(time)
+
+
+        camCanvasCtx.save();
+        camCanvasCtx.clearRect(0, 0, camCanvasElement.width, camCanvasElement.height);
+        camCanvasCtx.drawImage(
+            results.image, 0, 0, camCanvasElement.width, camCanvasElement.height);
+        if (results.multiFaceLandmarks) {
+            const landmarks = results.multiFaceLandmarks[0]
+
+            const srcPoints = []//landmarks.map(pt => [pt.x / camCanvasElement.width, pt.y / camCanvasElement.height])
+            const dstPoints = []//landmarks.map(pt => [(pt.x - 100) / camCanvasElement.width, (pt.y + 100) / camCanvasElement.height])
+            const corners = [[0, 0], [0, 1], [1, 0], [1, 1]]
+            for (var i = 1; i < X; i++) {
+                srcPoints.push([(i) / (X), (i) / (X)])
+                dstPoints.push([(i + time) / (X + time), (i + time) / (X + time)])
+            }
+            console.log(srcPoints)
+            console.log(dstPoints)
+            srcPoints.push(...corners,)
+            dstPoints.push(...corners,)
+            const myHomography = new Homography("piecewiseaffine");
+            myHomography.setReferencePoints(srcPoints, dstPoints);
+            const resultImage = imagedata_to_image(myHomography.warp(img));
+
+            canvasCtx.drawImage(resultImage, 0, 0, canvasElement.width, canvasElement.height)
+
+            drawConnectors(camCanvasCtx, landmarks, FACEMESH_TESSELATION,
+                { color: '#C0C0C070', lineWidth: 1 });
+            drawConnectors(camCanvasCtx, landmarks, FACEMESH_RIGHT_EYE, { color: '#FF3030' });
+            drawConnectors(camCanvasCtx, landmarks, FACEMESH_RIGHT_EYEBROW, { color: '#FF3030' });
+            drawConnectors(camCanvasCtx, landmarks, FACEMESH_RIGHT_IRIS, { color: '#FF3030' });
+            drawConnectors(camCanvasCtx, landmarks, FACEMESH_LEFT_EYE, { color: '#30FF30' });
+            drawConnectors(camCanvasCtx, landmarks, FACEMESH_LEFT_EYEBROW, { color: '#30FF30' });
+            drawConnectors(camCanvasCtx, landmarks, FACEMESH_LEFT_IRIS, { color: '#30FF30' });
+            drawConnectors(camCanvasCtx, landmarks, FACEMESH_FACE_OVAL, { color: '#E0E0E0' });
+            drawConnectors(camCanvasCtx, landmarks, FACEMESH_LIPS, { color: '#E0E0E0' });
+        }
+        camCanvasCtx.restore();
+    }
+
+    const faceMesh = new FaceMesh({
+        locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+        }
+    });
+    faceMesh.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: true,
+        minDetectionConfidence: 0.9,
+        minTrackingConfidence: 0.9
+    });
+    faceMesh.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+        onFrame: async () => {
+            await faceMesh.send({ image: videoElement });
+        },
+        width: 1280,
+        height: 720
+    });
+    camera.start();
+
+</script>
+
+</html>
