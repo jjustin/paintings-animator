@@ -1,5 +1,5 @@
 import cv2
-from scipy.spatial import distance as dist
+from math import sqrt
 import dlib
 import numpy as np
 # from skimage.transform import PiecewiseAffineTransform, warp
@@ -149,9 +149,9 @@ class Image:
         from_pts = copy.deepcopy(from_img_points)
 
         # # handle mouth
-        A = dist.euclidean(from_pts[51], from_pts[59])
-        B = dist.euclidean(from_pts[53], from_pts[57])
-        C = dist.euclidean(from_pts[49], from_pts[55])
+        A = euclidean_dist(from_pts[51], from_pts[59])
+        B = euclidean_dist(from_pts[53], from_pts[57])
+        C = euclidean_dist(from_pts[49], from_pts[55])
 
         # # compute the mouth aspect ratio
         mar = (A + B) / (2.0 * C)
@@ -209,10 +209,11 @@ class Image:
         return img
 
 
-# Check if a point is inside a rectangle
-
+def euclidean_dist(p1, p2):
+    return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
 def rect_contains(rect, point):
+    # Check if a point is inside a rectangle
     if point[0] < rect[0]:
         return False
     elif point[1] < rect[1]:
