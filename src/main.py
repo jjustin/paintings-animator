@@ -3,7 +3,7 @@ from scipy.spatial import distance as dist
 import dlib
 import numpy as np
 # from skimage.transform import PiecewiseAffineTransform, warp
-from cv2_cuda import Transformer, has_cuda
+from piecewiseAffine import Transformer, has_cuda
 from tqdm import tqdm
 from math import floor
 import json
@@ -300,14 +300,17 @@ def get_unsafe_border(frames, to_img: Image):
     right_scale = (from_right) / (anchor_right)
 
     return UnsafeBorder(
-        int(to_img.points[CENTER_POINT_IX][1] - top * top_scale * SAFE_BORDER_SCALE),
+        int(to_img.points[CENTER_POINT_IX][1] -
+            top * top_scale * SAFE_BORDER_SCALE),
         int(
             to_img.points[CENTER_POINT_IX][1]
             - bottom * bottom_scale * SAFE_BORDER_SCALE
         ),
-        int(to_img.points[CENTER_POINT_IX][0] - left * left_scale * SAFE_BORDER_SCALE),
+        int(to_img.points[CENTER_POINT_IX][0] -
+            left * left_scale * SAFE_BORDER_SCALE),
         int(
-            to_img.points[CENTER_POINT_IX][0] - right * right_scale * SAFE_BORDER_SCALE
+            to_img.points[CENTER_POINT_IX][0] -
+            right * right_scale * SAFE_BORDER_SCALE
         ),
     )
 
@@ -337,6 +340,7 @@ def offset_from_anchor_point(frames):
 @app.route("/images", methods=["GET"])
 def getImages():
     images = os.listdir("images")
+
     if "processing" in images:
         images.remove("processing")
     if ".DS_Store" in images:
@@ -344,15 +348,15 @@ def getImages():
     return json.dumps({"images": images, "processing": os.listdir("images/processing")})
 
 
-@app.route("/", defaults={"path": "index_additive.html"}, methods=["GET"])
+@app.route("/", defaults={"path": "src/index_additive.html"}, methods=["GET"])
 @app.route("/<path:path>", methods=["GET"])
 def getStatic(path):
-    return send_from_directory(".", path)
+    return send_from_directory("../", path)
 
 
 @app.route("/exists/<path:image>", methods=["GET"])
 def getExists(image):
-    return json.dumps(os.path.isfile("./images/" + image))
+    return json.dumps(os.path.isfile("images/" + image))
 
 
 @app.route("/addImage", methods=["POST"])
@@ -406,13 +410,13 @@ def generate_video(video_n, to_img: Image, img_name):
     print(f"Generating video from image {img_name} and video {video_n}")
 
     # get coordinates for every frame
-    json_path = "./preprocess/preprocess_" + video_n + ".json"
+    json_path = "preprocess/preprocess_" + video_n + ".json"
     with open(json_path) as json_file:
         data = json.load(json_file)
 
     # create output object
     img_n = img_name.split(".")
-    output_name = "./output/output_" + video_n + "_" + img_n[0] + ".mp4"
+    output_name = "output/output_" + video_n + "_" + img_n[0] + ".mp4"
     out = cv2.VideoWriter(
         output_name, cv2.VideoWriter_fourcc(
             *"avc1"), data["fps"], to_img.size()

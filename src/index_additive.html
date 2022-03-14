@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animate</title>
+    <link rel="stylesheet" href="stylesheet.css">
+
+</head>
+
+<body>
+    <div id="container">
+        <div id="image-picker">
+            <div class="image" id="addImage">+</div>
+
+            <script src="src/js/image_loader.js"></script>
+        </div>
+
+        <div id="video-picker">
+            <!-- not done - change ids as the name of the corresponding video -->
+            <input type="image" src="emoji/sad.png" name="sad" class="emojiImage" id="tajda_sad"
+                onclick="selectEmoji(this)">
+            <input type="image" src="emoji/flirty.png" name="flirty" class="emojiImage" id="tajda_flirty"
+                onclick="selectEmoji(this)">
+            <input type="image" src="emoji/happy.png" name="happy" class="emojiImage" id="katja_happy"
+                onclick="selectEmoji(this)">
+            <input type="image" src="emoji/smirk.png" name="smirk" class="emojiImage" id="katja_smirk"
+                onclick="selectEmoji(this)">
+            <input type="image" src="emoji/sleepy.png" name="sleepy" class="emojiImage" id="katja_sleepy"
+                onclick="selectEmoji(this)">
+            <input type="image" src="emoji/suspicious.png" name="suspicious" class="emojiImage" id="katja_suspicious"
+                onclick="selectEmoji(this)">
+
+            <script src="src/js/selector.js"></script>
+        </div>
+
+        <div id="result">
+            <div id="img-title"></div>
+            <video class="result-video" id="video" controls="false" style="visibility: hidden;">
+                <source id="source" src="" type="video/mp4">
+            </video>
+        </div>
+
+        <div id="description">
+            Naloži sliko ali izberi emotikon
+        </div>
+
+    </div>
+</body>
+
+</html>
