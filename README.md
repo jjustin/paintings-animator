@@ -10,7 +10,7 @@ Remove `opencv` from `requirements.txt` and build it from source if you would li
 ```
 cd paintings-animator
 pip install -r requirements.txt
-python src/main.py
+python src/api.py
 open localhost:5000
 ```
 
