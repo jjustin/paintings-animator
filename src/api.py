@@ -1,3 +1,4 @@
+from time import sleep
 from uuid import uuid4
 from threading import Thread
 
@@ -5,23 +6,16 @@ import json
 import os
 import errno
 import cv2
+from cv2 import imshow
+import numpy as np
+from detector import detect
 
-from helpers import Timer
+from helpers import Timer, raise_error_response
 from generator import generate_all_videos, Image
+from storage.image import list_images
 
-from flask import Flask, send_from_directory, request, Response
+from flask import Flask, send_from_directory, request, make_response
 app = Flask(__name__)
-
-
-@app.route("/images", methods=["GET"])
-def getImages():
-    images = os.listdir("images")
-
-    if "processing" in images:
-        images.remove("processing")
-    if ".DS_Store" in images:
-        images.remove(".DS_Store")
-    return json.dumps({"images": images, "processing": os.listdir("images/processing")})
 
 
 @app.route("/", defaults={"path": "src/index_additive.html"}, methods=["GET"])
@@ -35,12 +29,14 @@ def getExists(image):
     return json.dumps(os.path.isfile("images/" + image))
 
 
-@app.route("/addImage", methods=["POST"])
+@app.route("/images", methods=["GET"])
+def getImages():
+    return list_images()
+
+
+@app.route("/images", methods=["POST"])
 def add_image():
-    if "file" not in request.files:
-        print("No file part")
-        return Response(json.dumps({"error": "no file uploaded"}), status=400)
-    file = request.files["file"]
+    file = get_request_file("file")
 
     if file:
         filename = str(uuid4()) + "." + file.filename.split(".")[-1]
@@ -60,6 +56,41 @@ def add_image():
 def handle_image_upload(to_img, img_name):
     generate_all_videos(to_img, img_name)
     os.rename(f"images/processing/{img_name}", f"images/{img_name}")
+
+
+@app.route("/images/<path:image>", methods=["GET"])
+def get_image(image):
+    return send_from_directory("../images", image)
+
+
+@app.route("/images/detect", methods=["POST"])
+def detect_image():
+    img = get_request_image("file")
+    img_id = request.form.get("img_id", type=int)
+    img_id = img_id if img_id is not None else 0
+    r = detect(img, img_id)
+    return make_image_response(r)
+
+
+def make_image_response(img):
+    _, buffer = cv2.imencode('.png', img)
+    response = make_response(buffer.tobytes())
+    response.headers.set('Content-Type', 'image/png')
+    return response
+
+
+def get_request_image(file_key):
+    file = get_request_file(file_key)
+    nparr = np.fromfile(file, np.uint8)
+    return cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
+
+
+def get_request_file(file_key):
+    if file_key not in request.files:
+        print("No file part")
+        raise_error_response(
+            f"expeced file under key [{file_key}]", status=400)
+    return request.files[file_key]
 
 
 @app.route("/times", methods=["GET"])

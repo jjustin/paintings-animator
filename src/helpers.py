@@ -1,5 +1,7 @@
 from time import time_ns
 import cv2 as cv
+import json
+from flask import abort, Response
 
 
 def show(image, name="image"):
@@ -18,6 +20,11 @@ def cpu_to_gpu(image) -> cv.cuda_GpuMat:
     return image_gpu
 
 
+def raise_error_response(error, status):
+    resp = Response(json.dumps({"error": error}), status=status)
+    abort(resp)
+
+
 class Timer:
     times = {}
     times_count = {}
@@ -30,19 +37,25 @@ class Timer:
         self._passed = 0
         self._running = False
 
-    def start(self):
+    def start(self, *, phony=False):
+        if phony:
+            return self
         self._running = True
         self._start_time = time_ns()
         return self
 
-    def stop(self):
+    def stop(self, *, phony=False):
+        if phony:
+            return self
         if self._running:
             self._passed += time_ns() - self._start_time
         else:
             print("Timer stopped when not running")
         self._running = True
 
-    def end(self):
+    def end(self, *, phony=False):
+        if phony:
+            return self
         self.stop()
         Timer.times[self._name] += self._passed
         self._passed = 0

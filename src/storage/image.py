@@ -5,6 +5,8 @@ import numpy as np
 from helpers import Timer
 from math import floor
 import copy
+import json
+import os
 from piecewiseAffine import Transformer, has_cuda
 
 
@@ -303,3 +305,22 @@ def offset_from_anchor_point(frames):
             if y_diff_down > ydiff:
                 y_diff_down = ydiff
     return (y_diff_up, y_diff_down, x_diff_left, x_diff_right)
+
+
+def list_images():
+    images = os.listdir("images")
+
+    if "processing" in images:
+        images.remove("processing")
+    if ".DS_Store" in images:
+        images.remove(".DS_Store")
+    return {"images": images, "processing": os.listdir("images/processing")}
+
+
+def read_cv2_image(id, readflags=cv2.IMREAD_COLOR):
+    print(f"called read_cv2_image({id}, {readflags})")
+    return cv2.imread(f"images/{id}", readflags)
+
+
+def list_cv2_images(readflags=cv2.IMREAD_COLOR):
+    return [read_cv2_image(id, readflags=readflags) for id in list_images()["images"]]

@@ -100,7 +100,7 @@ addNewImage = () => {
         const formData = new FormData()
         formData.append('file', file)
 
-        response = await fetch("http://localhost:5000/addImage", { method: "POST", body: formData }).then(x => x.json())
+        response = await fetch("http://localhost:5000/images", { method: "POST", body: formData }).then(x => x.json())
 
         if (response.error) {
             alert("Error: " + response.error)
