@@ -14,7 +14,7 @@ from helpers import Timer, raise_error_response
 from generator import generate_all_videos, Image
 from storage.image import list_images
 
-from flask import Flask, send_from_directory, request, make_response
+from flask import Flask, send_from_directory, request, make_response, jsonify
 app = Flask(__name__)
 
 
@@ -66,11 +66,9 @@ def get_image(image):
 @app.route("/images/detect", methods=["POST"])
 def detect_image():
     img = get_request_image("file")
-    img_id = request.form.get("img_id", type=int)
-    img_id = img_id if img_id is not None else 0
-    r = detect(img, img_id)
-    return make_image_response(r)
-
+    r = detect(img)
+    # return make_image_response(r)
+    return jsonify(r)
 
 def make_image_response(img):
     _, buffer = cv2.imencode('.png', img)

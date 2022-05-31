@@ -1,11 +1,12 @@
-from pydoc import describe
-from unittest import skip
+from typing import Dict, List, Tuple
 import cv2
 import numpy as np
 from storage.image import list_cv2_images
 
 from helpers import Timer
 
+Point = Tuple[int, int]
+Corners = List[Point]
 
 timer_all = Timer("detect")
 timer_keypoints = Timer("detect_keypoints")
@@ -25,7 +26,8 @@ class _Detector():
     # matcher = cv2.BFMatcher()
 
     FLANN_INDEX_KDTREE = 1
-    '''https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html'''
+    '''see https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html'''
+
     index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
     search_params = dict(checks=50)
 
@@ -46,7 +48,7 @@ class _Detector():
     def match(self, descriptors1, descriptors2, k=2):
         return self.matcher.knnMatch(descriptors1, k=2)
 
-    def train(self, img):
+    def add(self, img):
         kp, des = self.detector.detectAndCompute(img, None)
         self.matcher.add([des])
         return kp, des
@@ -61,15 +63,15 @@ class Template():
     Template is used to store a template image and its keypoints and descriptors
     '''
 
-    def __init__(self, img):
+    def __init__(self, img, img_id: str):
         self.img = img
-        self.keypoints, self.descriptors = detector.train(img)
+        self.img_id = img_id
+        self.keypoints, self.descriptors = detector.add(img)
 
 
-templates = [Template(img)
-             for img in list_cv2_images(readflags=cv2.IMREAD_GRAYSCALE)]
+templates = [Template(img, img_id)
+             for (img, img_id) in list_cv2_images(readflags=cv2.IMREAD_GRAYSCALE)]
 '''templates stores all images in storage to prevent loading them each time they are needed'''
-detector.matcher.train()
 
 
 def add_new_template(img_grayscale):
@@ -84,30 +86,74 @@ RATIO_TRESHOLD = 0.7
 ''' https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html propeses 0.7'''
 
 
-def detect(detecting_image, template_id):
+def detect(detecting_image):
     '''detect detects templates in the detecting_image and returns possible matches'''
     timer_all.start()
     detecting_image = cv2.cvtColor(detecting_image, cv2.COLOR_BGR2GRAY)
     keypoints, descriptors = detector(detecting_image, None)
 
     knn_matches = detector.match(descriptors, None, k=1)
-    print(knn_matches[0])
-    matchesMask = [[0, 0] for i in range(len(knn_matches))]
-    good_matches = []
-    for i, (m, n) in enumerate(knn_matches):
-        if m.imgIdx != template_id:
-            continue
-        if m.distance < RATIO_TRESHOLD * n.distance:
-            good_matches.append([m])
-            matchesMask[i] = [1, 0]
 
-    draw_params = dict(matchColor=(0, 255, 0),
-                       singlePointColor=(255, 0, 0),
-                       matchesMask=matchesMask,
-                       flags=cv2.DrawMatchesFlags_DEFAULT)
+    matches_counter: Dict[str, List] = {}
+    for i, (m, n) in enumerate(knn_matches):
+        if m.imgIdx not in matches_counter:
+            matches_counter[m.imgIdx] = []
+        if m.distance < RATIO_TRESHOLD * n.distance:
+            matches_counter[m.imgIdx].append(m)
+
+    out = []
+
+    for i in matches_counter.keys():
+        good_matches = matches_counter[i]
+        template: Template = templates[i]
+
+        # skip images with not enough matched keypoints
+        if len(good_matches) < 10:
+            continue
+
+        # create arrays of points in gallery and on image
+        template_points = np.empty((len(good_matches), 2), dtype=np.float32)
+        gallery = np.empty((len(good_matches), 2), dtype=np.float32)
+
+        for i, m in enumerate(good_matches):
+            # TODO: shorter?
+            template_points[i, 0] = template.keypoints[m.trainIdx].pt[0]
+            template_points[i, 1] = template.keypoints[m.trainIdx].pt[1]
+            gallery[i, 0] = keypoints[m.queryIdx].pt[0]
+            gallery[i, 1] = keypoints[m.queryIdx].pt[1]
+
+        H, _ = cv2.findHomography(template_points, gallery, cv2.RANSAC)
+
+        # transform template corner points to gallery points
+        h, w = template.img.shape
+        template_corners = np.array([
+            [[0, 0]],
+            [[w, 0]],
+            [[0, h]],
+            [[w, h]],
+        ], dtype=np.float32)
+
+        painting_corners = cv2.perspectiveTransform(template_corners, H)
+        corners = [point.tolist() for [point] in painting_corners]
+
+        out.append({
+            "name": template.img_id,
+            "corners": corners,
+        })
+
+        # draw_params = dict(matchColor=(0, 255, 0),
+        #                    singlePointColor=(255, 0, 0),
+        #                    matchesMask=matchesMask,
+        #                    flags=cv2.DrawMatchesFlags_DEFAULT)
+
+        # kp_img = cv2.drawMatchesKnn(detecting_image, keypoints, template.img,
+        #                             template.keypoints, knn_matches, None, **draw_params)
+        cv2.polylines(detecting_image, [np.int32(painting_corners)],
+                      True, (0, 255, 0), 1)
+
+    # For debug purposes
+    cv2.imwrite("detected.png", detecting_image)
 
     timer_all.end()
-    template = templates[template_id]
-    return cv2.drawMatchesKnn(detecting_image, keypoints, template.img, template.keypoints, knn_matches, None, **draw_params)
 
-    return cv2.drawKeypoints(detecting_image, keypoints, None, color=(0, 255, 0), flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    return out

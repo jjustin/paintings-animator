@@ -323,4 +323,4 @@ def read_cv2_image(id, readflags=cv2.IMREAD_COLOR):
 
 
 def list_cv2_images(readflags=cv2.IMREAD_COLOR):
-    return [read_cv2_image(id, readflags=readflags) for id in list_images()["images"]]
+    return [(read_cv2_image(id, readflags=readflags), id) for id in list_images()["images"]]
