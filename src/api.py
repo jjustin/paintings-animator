@@ -13,8 +13,10 @@ from detector import detect
 from helpers import Timer, raise_error_response
 from generator import generate_all_videos, Image
 from storage.image import list_images
+from storage.landmark import list_landmarks
 
 from flask import Flask, send_from_directory, request, make_response, jsonify
+
 app = Flask(__name__)
 
 
@@ -27,6 +29,11 @@ def getStatic(path):
 @app.route("/exists/<path:image>", methods=["GET"])
 def getExists(image):
     return json.dumps(os.path.isfile("images/" + image))
+
+
+@app.route("/landmarks", methods=["GET"])
+def getLandmarks():
+    return list_landmarks()
 
 
 @app.route("/images", methods=["GET"])
@@ -69,6 +76,7 @@ def detect_image():
     r = detect(img)
     # return make_image_response(r)
     return jsonify(r)
+
 
 def make_image_response(img):
     _, buffer = cv2.imencode('.png', img)
