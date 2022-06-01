@@ -19,7 +19,7 @@ def generate_video(landmarks: Landmarks, to_img: Image, img_name: str):
 
     # create output object
     img_n = img_name.split(".")
-    output_name = "output/output_" + landmarks.name + "_" + img_n[0] + ".mp4"
+    output_name = "output/" + img_n[0] + "_" + landmarks.type + ".mp4"
     out = cv2.VideoWriter(
         output_name, cv2.VideoWriter_fourcc(*"avc1"), landmarks.fps, to_img.size())
 

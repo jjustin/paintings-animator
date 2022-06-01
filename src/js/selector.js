@@ -8,7 +8,7 @@ function changeVideo() {
         var source = document.getElementById("source")
 
         video.style.visibility = "visible"
-        source.src = "output/output_" + selected_emoji + "_" + selected_img + ".mp4"
+        source.src = "output/" + selected_img + "_" + selected_emoji + ".mp4"
         output.load()
         output.play()
     }

@@ -156,12 +156,13 @@
 
         <div id="video-picker">
             <!-- not done - change ids as the name of the corresponding video -->
-            <input type="image" src="emoji/sad.png" name="sad" class="emojiImage" id="tajda_sad" onclick="selectEmoji(this)">
-            <input type="image" src="emoji/flirty.png" name="flirty" class="emojiImage" id="tajda_flirty" onclick="selectEmoji(this)">
-            <input type="image" src="emoji/happy.png" name="happy" class="emojiImage" id="katja_happy" onclick="selectEmoji(this)">
-            <input type="image" src="emoji/smirk.png" name="smirk" class="emojiImage" id="katja_smirk" onclick="selectEmoji(this)">
-            <input type="image" src="emoji/sleepy.png" name="sleepy" class="emojiImage" id="katja_sleepy" onclick="selectEmoji(this)">
-            <input type="image" src="emoji/suspicious.png" name="suspicious" class="emojiImage" id="katja_suspicious" onclick="selectEmoji(this)">
+            <input type="image" src="emoji/sad.png" name="sad" class="emojiImage" id="sad" onclick="selectEmoji(this)">
+            <input type="image" src="emoji/flirty.png" name="flirty" class="emojiImage" id="flirty" onclick="selectEmoji(this)">
+            <input type="image" src="emoji/happy.png" name="happy" class="emojiImage" id="happy" onclick="selectEmoji(this)">
+            <input type="image" src="emoji/smirk.png" name="smirk" class="emojiImage" id="smirk" onclick="selectEmoji(this)">
+            <input type="image" src="emoji/sleepy.png" name="sleepy" class="emojiImage" id="sleepy" onclick="selectEmoji(this)">
+            <input type="image" src="emoji/suspicious.png" name="suspicious" class="emojiImage" id="suspicious"
+                onclick="selectEmoji(this)">
 
             <script>
                 var selected_img = ''
@@ -174,7 +175,7 @@
                         var source = document.getElementById("source")
 
                         video.style.visibility = "visible"
-                        source.src = "output/output_" + selected_emoji + "_" + selected_img + ".mp4"
+                        source.src = "output/" + selected_img + "_" + selected_emoji + ".mp4"
                         output.load()
                         output.play()
                     }

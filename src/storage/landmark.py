@@ -2,8 +2,7 @@ import json
 import os
 
 _landmarks = os.listdir("landmarks")
-
-LANDMARKS = map(lambda x: x.split(".")[0], _landmarks)
+LANDMARKS = list(map(lambda x: x.split(".")[0], _landmarks))
 
 
 class Landmarks:
@@ -12,6 +11,7 @@ class Landmarks:
         json_path = "landmarks/" + name + ".json"
         with open(json_path) as json_file:
             data = json.load(json_file)
+            self.type = name.split("_")[0]
             self.fps = data["fps"]
             self.frames = data["coords"]
             self.faces = data["face"]
