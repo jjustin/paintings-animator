@@ -73,7 +73,11 @@ def get_image(image):
 @app.route("/images/detect", methods=["POST"])
 def detect_image():
     img = get_request_image("file")
-    r = detect(img)
+    r = detect(img,
+               skip_images=request.args.get("skip_images", "").split(","),
+               good_match_threshold=request.args.get(
+                   "good_match_threshold", 20, type=int)
+               )
     # return make_image_response(r)
     return jsonify(r)
 

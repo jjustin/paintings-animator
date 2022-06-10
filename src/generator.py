@@ -6,9 +6,9 @@ from storage.image import Image, get_unsafe_border
 from storage.landmark import Landmarks, generator_all_landmarks
 
 
-def generate_all_videos(to_img, img_name):
+def generate_all_videos(to_img: Image, img_name):
     print("Starting video processing")
-    # threads = []
+
     for landmarks in generator_all_landmarks():
         generate_video(landmarks, to_img, img_name)
 

@@ -1,3 +1,4 @@
+from time import time
 from typing import Dict, List, Tuple
 import cv2
 import numpy as np
@@ -86,9 +87,25 @@ RATIO_TRESHOLD = 0.7
 ''' https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html propeses 0.7'''
 
 
-def detect(detecting_image):
-    '''detect detects templates in the detecting_image and returns possible matches'''
+def detect(detecting_image, skip_images=[], good_match_threshold=10):
+    '''
+    detect detects templates in the detecting_image and returns possible matches
+    
+    good_match_threshold - number of keypoints that must match to be considered a match
+    skip_images - list of image ids to skip
+    '''
     timer_all.start()
+
+    # Scale the image to height of max 1440 to reduce processing time
+    print("input size: ", detecting_image.shape)
+
+    if detecting_image.shape[0] > 1080:
+        scale_factor = 1080 / detecting_image.shape[0]
+
+        detecting_image = cv2.resize(
+            detecting_image, (0, 0), fx=scale_factor, fy=scale_factor)
+        print("input size after resize: ", detecting_image.shape)
+
     detecting_image = cv2.cvtColor(detecting_image, cv2.COLOR_BGR2GRAY)
     keypoints, descriptors = detector(detecting_image, None)
 
@@ -96,19 +113,25 @@ def detect(detecting_image):
 
     matches_counter: Dict[str, List] = {}
     for i, (m, n) in enumerate(knn_matches):
-        if m.imgIdx not in matches_counter:
-            matches_counter[m.imgIdx] = []
         if m.distance < RATIO_TRESHOLD * n.distance:
+            if m.imgIdx not in matches_counter:
+                print(m.imgIdx)
+                matches_counter[m.imgIdx] = []
             matches_counter[m.imgIdx].append(m)
 
     out = []
 
+    detecting_h, detecting_w = detecting_image.shape
+
     for i in matches_counter.keys():
         good_matches = matches_counter[i]
         template: Template = templates[i]
+        print(f"{template.img_id} contains {len(good_matches)} keypoint matches")
+        if template.img_id in skip_images:
+            continue
 
         # skip images with not enough matched keypoints
-        if len(good_matches) < 10:
+        if len(good_matches) < good_match_threshold:
             continue
 
         # create arrays of points in gallery and on image
@@ -134,7 +157,8 @@ def detect(detecting_image):
         ], dtype=np.float32)
 
         painting_corners = cv2.perspectiveTransform(template_corners, H)
-        corners = [point.tolist() for [point] in painting_corners]
+        corners = [[point[0]/detecting_w, point[1]/detecting_h]
+                   for [point] in painting_corners]
 
         out.append({
             "name": template.img_id,
@@ -152,7 +176,7 @@ def detect(detecting_image):
                       True, (0, 255, 0), 1)
 
     # For debug purposes
-    cv2.imwrite("detected.png", detecting_image)
+    cv2.imwrite(f"debug/detected_{time()}.png", detecting_image)
 
     timer_all.end()
 
