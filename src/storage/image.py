@@ -1,5 +1,6 @@
+from cmath import pi
 import cv2
-from math import sqrt
+from math import atan2, sqrt
 import dlib
 import numpy as np
 from helpers import Timer
@@ -16,7 +17,8 @@ applyTimer = Timer("apply")
 N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
 SAFE_BORDER_SCALE = 1.05
-CENTER_POINT_IX = 27
+CENTER_POINT_IX = 27  # between the eyes
+CENTER_POINT_IX2 = 34  # nose point
 
 PREDICTOR_FILENAME = "shape_predictor_68_face_landmarks.dat"
 
@@ -24,11 +26,42 @@ predictor = dlib.shape_predictor(PREDICTOR_FILENAME)
 detector = dlib.get_frontal_face_detector()
 
 
+class UnsafeBorder:
+    '''
+    UnsafeBorder is used to create a border around the face.
+    '''
+
+    def __init__(self, top: int, bottom, left, right):
+        self._top = top
+        self._bottom = bottom
+        self._left = left
+        self._right = right
+
+    def to_points(self):
+        return [
+            [self._left, self._top],
+            [self._right, self._top],
+            [self._left, self._bottom],
+            [self._right, self._bottom],
+            [(self._right + self._left) // 2, self._top],
+            [(self._right + self._left) // 2, self._bottom],
+            [self._right, (self._bottom + self._top) // 2],
+            [self._left, (self._bottom + self._top) // 2],
+        ]
+
+
 class Image:
-    def __init__(self, img):
+    def __init__(self, img, max_height=1200):
         initTimer.start()
+
+        # resize image to prevent long processing times
+        if img.shape[0] > max_height:
+            scale_factor = max_height / img.shape[0]
+            img = cv2.resize(img, (0, 0), fx=scale_factor, fy=scale_factor)
+            print("input size after resize: ", img.shape)
+
         # cv2 image object
-        self.img = img
+        self.img_cpu = img
         if has_cuda:
             self.img = cv2.cuda_GpuMat()
             self.img.upload(img)
@@ -41,17 +74,46 @@ class Image:
             self.face = faces[0]
             self.landmarks = predictor(image=self.gray, box=self.face)
             self.rows, self.cols, self.ch = img.shape
+
             self.points = [
                 [self.landmarks.part(i).x, self.landmarks.part(i).y]
                 for i in range(0, N_OF_LANDMARKS)
             ]
+
             self.border = [
                 [0, 0],
                 [self.cols, 0],
                 [0, self.rows],
                 [self.cols, self.rows],
             ]
+
+            # rotate points to get the face aligned with the y-axis
+            dx = self.points[CENTER_POINT_IX2][0] - \
+                self.points[CENTER_POINT_IX][0]
+            dy = self.points[CENTER_POINT_IX2][1] - \
+                self.points[CENTER_POINT_IX][1]
+
+            # x and y switched because we want to rotate to y axis
+            angle = 180*atan2(dx, dy)/pi
+            print(angle)
+
+            self.rotation_matrix = cv2.getRotationMatrix2D(
+                self.points[CENTER_POINT_IX], angle=-angle, scale=1)
+
+            self.inverse_rotation_matrix = cv2.getRotationMatrix2D(
+                self.points[CENTER_POINT_IX], angle=angle, scale=1)
+
+            self.points = self.rotate_points(self.points)
         initTimer.end()
+
+    def rotate_points(self, points, inverse=False):
+        M = self.rotation_matrix
+        if inverse:
+            M = self.inverse_rotation_matrix
+
+        points = np.array(points, ndmin=2)
+        points = np.c_[points, np.ones(points.shape[0])].T
+        return (M @ points).T
 
     def size(self):
         return (self.cols, self.rows)
@@ -97,36 +159,39 @@ class Image:
         )
         return img
 
-    # applies from_img's face landmarks to image
     def apply(
         self,
-        anchor_points,
-        from_img_points,
-        from_img_face_points,
-        unsafe_border,
+        landmark_anchor,
+        landmark_points,
+        landmark_face_border,
+        unsafe_border: UnsafeBorder,
         draw_overlay=False,
     ):
+        """
+        applies from_img's face landmarks to image
+        """
+
         applyTimer.start()
         if not self.contains_face:
             return self.add_text("No face found", fontColor=(255, 0, 0))
 
         # face's center
         fx1, fy1 = (
-            from_img_points[CENTER_POINT_IX][0],
-            from_img_points[CENTER_POINT_IX][1],
+            landmark_points[CENTER_POINT_IX][0],
+            landmark_points[CENTER_POINT_IX][1],
         )
-        ax1, ay1 = anchor_points[CENTER_POINT_IX][0], anchor_points[CENTER_POINT_IX][1]
+        ax1, ay1 = landmark_anchor[CENTER_POINT_IX][0], landmark_anchor[CENTER_POINT_IX][1]
 
         # look at what changed in picture
         changes = [
             [
-                (from_img_points[i][0] - fx1) + ax1 - anchor_points[i][0],
-                (from_img_points[i][1] - fy1) + ay1 - anchor_points[i][1],
+                (landmark_points[i][0] - fx1) + ax1 - landmark_anchor[i][0],
+                (landmark_points[i][1] - fy1) + ay1 - landmark_anchor[i][1],
             ]
             for i in range(N_OF_LANDMARKS)
         ]
 
-        from_pts = copy.deepcopy(from_img_points)
+        from_pts = copy.deepcopy(landmark_points)
 
         # # handle mouth
         A = euclidean_dist(from_pts[51], from_pts[59])
@@ -139,8 +204,8 @@ class Image:
         # # face's coordinates
         tx1, ty1 = self.face.left(), self.face.top()
         tx2, ty2 = self.face.right(), self.face.bottom()
-        fx1, fy1 = from_img_face_points[0], from_img_face_points[2]
-        fx2, fy2 = from_img_face_points[1], from_img_face_points[3]
+        fx1, fy1 = landmark_face_border[0], landmark_face_border[2]
+        fx2, fy2 = landmark_face_border[1], landmark_face_border[3]
 
         x_scale = (tx2 - tx1) / (fx2 - fx1)
         y_scale = (ty2 - ty1) / (fy2 - fy1)
@@ -151,8 +216,10 @@ class Image:
 
         border_points = unsafe_border.to_points()
 
-        final_points = from_pts + border_points
-        start_points = self.points + border_points
+        final_points = self.rotate_points(np.concatenate(
+            (from_pts, border_points)), inverse=True)
+        start_points = self.rotate_points(np.concatenate(
+            (self.points, border_points)), inverse=True)
 
         transformTimer = Timer("transform").start()
 
@@ -162,7 +229,7 @@ class Image:
 
         if draw_overlay:
             subdiv = cv2.Subdiv2D((0, 0, img.shape[1], img.shape[0]))
-            for point in from_pts + border_points:
+            for point in final_points:
                 x, y = int(point[0]), int(point[1])
                 subdiv.insert((x, y))
             draw_delaunay(img, subdiv, (255, 255, 255))
@@ -208,39 +275,15 @@ def draw_delaunay(img, subdiv, delaunay_color):
 
     for t in triangleList:
 
-        pt1 = (t[0], t[1])
-        pt2 = (t[2], t[3])
-        pt3 = (t[4], t[5])
+        pt1 = (int(t[0]), int(t[1]))
+        pt2 = (int(t[2]), int(t[3]))
+        pt3 = (int(t[4]), int(t[5]))
 
         if rect_contains(r, pt1) and rect_contains(r, pt2) and rect_contains(r, pt3):
 
             cv2.line(img, pt1, pt2, delaunay_color, 1, cv2.LINE_AA, 0)
             cv2.line(img, pt2, pt3, delaunay_color, 1, cv2.LINE_AA, 0)
             cv2.line(img, pt3, pt1, delaunay_color, 1, cv2.LINE_AA, 0)
-
-
-class UnsafeBorder:
-    '''
-    UnsafeBorder is used to create a border around the face.
-    '''
-
-    def __init__(self, top: int, bottom, left, right):
-        self._top = top
-        self._bottom = bottom
-        self._left = left
-        self._right = right
-
-    def to_points(self):
-        return [
-            [self._left, self._top],
-            [self._right, self._top],
-            [self._left, self._bottom],
-            [self._right, self._bottom],
-            [(self._right + self._left) // 2, self._top],
-            [(self._right + self._left) // 2, self._bottom],
-            [self._right, (self._bottom + self._top) // 2],
-            [self._left, (self._bottom + self._top) // 2],
-        ]
 
 
 def get_unsafe_border(frames, to_img: Image):
@@ -318,7 +361,7 @@ def list_images():
 
 
 def read_cv2_image(id, readflags=cv2.IMREAD_COLOR):
-    print(f"called read_cv2_image({id}, {readflags})")
+    # print(f"called read_cv2_image({id}, {readflags})")
     return cv2.imread(f"images/{id}", readflags)
 
 
