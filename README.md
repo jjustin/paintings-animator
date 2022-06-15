@@ -18,6 +18,7 @@ open localhost:5000
 This section is needed only if you would like to use CUDA for transformation of images.  
 
 
+## Installation
 Install cuda toolkit v11.5
 ```
 sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
@@ -25,6 +26,7 @@ sudo sh -c 'echo "deb http://developer.download.nvidia.com/compute/cuda/repos/ub
 sudo apt-get update
 sudo apt-get install -y cuda-toolkit-11-5
 ```
+## Validate installation
 Check cuda devices
 ```
 cd /usr/local/cuda/samples/1_Utilities/deviceQuery
@@ -32,6 +34,13 @@ sudo make
 ./deviceQuery
 ```
 Your GPU should be present in the output.
+
+## Env varibales
+You may be required to update env variables
+```
+export PATH=/usr/local/cuda/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+```
 
 ## opencv
 Opencv needs to be built with cuda enabled.  
@@ -67,6 +76,9 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 -D PYTHON3_PACKAGES_PATH=$HOME/.pyenv/versions/$PYTHON_VERSION/lib/python3.8/site-packages \
 -D PYTHON3_LIBRARY=$HOME/.pyenv/versions/$PYTHON_VERSION/lib/libpython3.8.a \
 -D PYTHON3_INCLUDE_DIR=$HOME/.pyenv/versions/$PYTHON_VERSION/include \
+
+# Optional additional parameter to generate pkg-config .pc file
+-D OPENCV_GENERATE_PKGCONFIG=ON \
 ```
 Ensure correct python environment is present in the output. And check CUDA is being built.  
 
