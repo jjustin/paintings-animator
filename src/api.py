@@ -1,4 +1,3 @@
-from time import sleep
 from uuid import uuid4
 from threading import Thread
 
@@ -6,14 +5,13 @@ import json
 import os
 import errno
 import cv2
-from cv2 import imshow
 import numpy as np
-from detector import detect
+from detector import detect, add_new_template as register_detector_template
 
 from helpers import Timer, raise_error_response
-from generator import generate_all_videos, Image
-from storage.image import list_images
-from storage.landmark import list_landmarks
+from generator import ensure_archive_video, ensure_video, generate_one_per_emotion, Image, set_main_version
+from storage.image import list_images, read_cv2_image
+from storage.landmark import dict_landmarks_meta
 
 from flask import Flask, send_from_directory, request, make_response, jsonify
 
@@ -26,14 +24,16 @@ def getStatic(path):
     return send_from_directory("../", path)
 
 
-@app.route("/exists/<path:image>", methods=["GET"])
-def getExists(image):
-    return json.dumps(os.path.isfile("images/" + image))
-
+@app.route("/exists/<path:img_id>", methods=["GET"])
+def getExists(img_id):
+    for fname in os.listdir("images/"):
+        if fname.startswith(img_id):
+            return "true"
+    return "false"
 
 @app.route("/landmarks", methods=["GET"])
 def getLandmarks():
-    return list_landmarks()
+    return dict_landmarks_meta()
 
 
 @app.route("/images", methods=["GET"])
@@ -46,29 +46,84 @@ def add_image():
     file = get_request_file("file")
 
     if file:
-        filename = str(uuid4()) + "." + file.filename.split(".")[-1]
+        img_id = str(uuid4())
+        filename = img_id + "." + file.filename.split(".")[-1]
         filepath = "images/processing/" + filename
         file.save(filepath)
 
-        to_img = Image(cv2.imread(filepath))
-        if not to_img.contains_face:
+        img = Image(cv2.imread(filepath))
+        if not img.contains_face:
             os.remove(filepath)
             return {"error": "no face detected"}
-        Thread(target=handle_image_upload, args=[to_img, filename]).start()
-        return {"response": "processing", "img_name": filename}
+        Thread(target=handle_image_upload, args=[img_id, img]).start()
+        return {"response": "processing", "img_id": img_id}
 
     return json.dumps({"error": "file is empty"})
 
 
-def handle_image_upload(to_img, img_name):
-    generate_all_videos(to_img, img_name)
-    os.rename(f"images/processing/{img_name}", f"images/{img_name}")
+def handle_image_upload(img_id: str, img: Image):
+    generate_one_per_emotion(img_id, img)
+    for fname in os.listdir("images/processing/"):
+        if fname.startswith(img_id):
+            os.rename(f"images/processing/{fname}", f"images/{fname}")
+            break
+    register_detector_template(cv2.cvtColor(
+        img.img_cpu, cv2.COLOR_BGR2GRAY), img_id)
 
 
-@app.route("/images/<path:image>", methods=["GET"])
-def get_image(image):
-    return send_from_directory("../images", image)
+@app.route("/images/<string:img_id>", methods=["GET"])
+def get_image(img_id):
+    img = read_cv2_image(img_id)
+    return make_image_response(img)
+@app.route("/images/processing/<string:img_id>", methods=["GET"])
+def get_processing_image(img_id):
+    img = read_cv2_image(img_id, path="images/processing")
+    return make_image_response(img)
 
+
+@app.route("/output/<string:img_id>/<string:emotion>", methods=["GET"])
+def get_output(img_id, emotion):
+    '''
+    get_output responds with set emotion of given img_id
+    '''
+    # omit file extension
+    if '.' in img_id:
+        img_id = '.'.join(img_id.split('.')[:-1])
+
+    ensure_video(img_id, emotion)
+
+    return send_from_directory("../output", f"{img_id}_{emotion}.mp4")
+
+
+@app.route("/output/<string:img_id>/<string:emotion>/<string:version>", methods=["GET"])
+def get_output_versioned(img_id, emotion, version):
+    '''
+    get_output_versioned responds with set emotion of given img_id
+    '''
+    # omit file extension
+    if '.' in img_id:
+        img_id = '.'.join(img_id.split('.')[:-1])
+
+    ensure_archive_video(img_id, emotion, version)
+
+    return send_from_directory("../output/archive", f"{img_id}_{emotion}_{version}.mp4")
+
+
+@app.route("/output/<string:img_id>/<string:emotion>", methods=["POST"])
+def change_output_version(img_id, emotion):
+    # omit file extension
+    if '.' in img_id:
+        img_id = '.'.join(img_id.split('.')[:-1])
+
+    # get request version from request
+    body_json = request.get_json(force=True)
+    if "version" not in body_json:
+        raise_error_response("expected version in body", status=400)
+    version = body_json["version"]
+
+    set_main_version(img_id, emotion, version)
+
+    return json.dumps({"response": "success"})
 
 @app.route("/images/detect", methods=["POST"])
 def detect_image():
@@ -113,6 +168,8 @@ if __name__ == "__main__":
     try:
         if not os.path.exists("output"):
             os.makedirs("output")
+        if not os.path.exists("output/archive"):
+            os.makedirs("output/archive")
         if not os.path.exists("images"):
             os.makedirs("images")
         if not os.path.exists("images/processing"):

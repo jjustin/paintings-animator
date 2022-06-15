@@ -46,8 +46,8 @@ class _Detector():
     def detect(self, img, mask):
         return self.detector.detect(img, mask)
 
-    def match(self, descriptors1, descriptors2, k=2):
-        return self.matcher.knnMatch(descriptors1, k=2)
+    def match(self, descriptors, k=2):
+        return self.matcher.knnMatch(descriptors, k=k)
 
     def add(self, img):
         kp, des = self.detector.detectAndCompute(img, None)
@@ -56,12 +56,13 @@ class _Detector():
 
 
 detector = _Detector()
-'''detector is used singleton used for feature detection'''
+'''detector is singleton used for feature detection'''
 
 
 class Template():
     '''
-    Template is used to store a template image and its keypoints and descriptors
+    Template is used to store a template image and its keypoints and descriptors.
+    Template is autmatically added to the detector when created.
     '''
 
     def __init__(self, img, img_id: str):
@@ -75,12 +76,12 @@ templates = [Template(img, img_id)
 '''templates stores all images in storage to prevent loading them each time they are needed'''
 
 
-def add_new_template(img_grayscale):
+def add_new_template(img_grayscale, img_id):
     '''
     add_new_template adds new template to templates list
     '''
-    templates.append(Template(img_grayscale))
-    detector.matcher.train()
+    print("registering template for " + img_id)
+    templates.append(Template(img_grayscale, img_id))
 
 
 RATIO_TRESHOLD = 0.7
@@ -109,7 +110,7 @@ def detect(detecting_image, skip_images=[], good_match_threshold=10):
     detecting_image = cv2.cvtColor(detecting_image, cv2.COLOR_BGR2GRAY)
     keypoints, descriptors = detector(detecting_image, None)
 
-    knn_matches = detector.match(descriptors, None, k=1)
+    knn_matches = detector.match(descriptors, k=2)
 
     matches_counter: Dict[str, List] = {}
     for i, (m, n) in enumerate(knn_matches):

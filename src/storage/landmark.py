@@ -1,9 +1,6 @@
 import json
 import os
 
-_landmarks = os.listdir("landmarks")
-LANDMARKS = list(map(lambda x: x.split(".")[0], _landmarks))
-
 
 class Landmarks:
     def __init__(self, name: str):
@@ -17,22 +14,48 @@ class Landmarks:
             self.faces = data["face"]
 
 
-def generator_all_landmarks():
-    for landmark_name in LANDMARKS:
-        yield Landmarks(landmark_name)
+class LandmarksMetadata:
+    def __init__(self, filename):
+        self.name = filename.split(".")[0]
+        self.emotion = self.name.split("_")[0]
+        self.version = self.name.split("_")[1]
+
+    def serialize(self):
+        return {
+            "name": self.name,
+            "emotion": self.emotion,
+            "version": self.version
+        }
 
 
-def list_landmarks():
+def list_landmarks_meta():
     '''
-    list_landmarks returns a list of all landmarks in the landmarks folder with no file contents
+    list_landmarks returns a list of all existing LandmarksMetadata
     '''
-    def landmark(name):
-        '''
-        return landmark info based on name
-        '''
-        split = name.split("_")
-        type = split[0]
-        version = split[1]
-        return {"type": type, "version": version, "name": name}
+    return [LandmarksMetadata(l) for l in os.listdir("landmarks")]
 
-    return {l["name"]: l for l in map(landmark, LANDMARKS)}
+
+def dict_landmarks_meta():
+    '''
+    dict_landmarks returns a dictionary of all landmarks' metadatas mapped by type and version
+    '''
+
+    out = {}
+    for l in list_landmarks_meta():
+        if l.emotion not in out:
+            out[l.emotion] = {}
+
+        out[l.emotion][l.version] =  l.serialize()
+
+    return out
+
+
+def get_landmarks(type, version):
+    '''
+    get_landmarks returns a Landmarks object based on name
+    '''
+    return Landmarks(get_name(type, version))
+
+
+def get_name(type, version):
+    return f"{type}_{version}"

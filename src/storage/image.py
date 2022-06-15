@@ -3,7 +3,7 @@ import cv2
 from math import atan2, sqrt
 import dlib
 import numpy as np
-from helpers import Timer
+from helpers import Timer, raise_error_response
 from math import floor
 import copy
 import json
@@ -62,6 +62,7 @@ class Image:
 
         # cv2 image object
         self.img_cpu = img
+        self.img = img
         if has_cuda:
             self.img = cv2.cuda_GpuMat()
             self.img.upload(img)
@@ -355,14 +356,19 @@ def list_images():
 
     if "processing" in images:
         images.remove("processing")
-    if ".DS_Store" in images:
-        images.remove(".DS_Store")
-    return {"images": images, "processing": os.listdir("images/processing")}
+    return {
+        "images": [i.split('.')[0] for i in images],
+        "processing": [i.split('.')[0] for i in os.listdir("images/processing")]
+    }
 
 
-def read_cv2_image(id, readflags=cv2.IMREAD_COLOR):
-    # print(f"called read_cv2_image({id}, {readflags})")
-    return cv2.imread(f"images/{id}", readflags)
+def read_cv2_image(id, path='images', readflags=cv2.IMREAD_COLOR):
+    images = list(
+        filter(lambda file: file.startswith(id), os.listdir(path)))
+    if len(images) == 0:
+        raise_error_response(f"image {id} does not exist", status=400)
+
+    return cv2.imread(f"{path}/{images[0]}", readflags)
 
 
 def list_cv2_images(readflags=cv2.IMREAD_COLOR):
