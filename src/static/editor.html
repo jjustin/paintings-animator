@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animator editor</title>
+
+    <link rel="stylesheet" href="stylesheet-editor.css">
+
+</head>
+
+<body>
+    <script>
+        var selected_image = "";
+        var selected_emotion = "";
+        var selected_version = "";
+
+        const update_render = () => {
+            if (selected_image == "" || selected_emotion == "" || selected_version == "") {
+                return;
+            }
+            update_render_main()
+            update_render_selected()
+
+            play_videos()
+        }
+        const play_videos = () => {
+            play_video_main()
+            play_video_selected()
+        }
+    </script>
+    <div id="app">
+        <div id="image-selector">
+            <script>
+                // load images
+                fetch("http://localhost:5000/images").
+                    then(response => response.json()).
+                    then(({ images }) => {
+                        for (var img_id of images) {
+                            const img = document.createElement("img");
+                            img.id = img_id;
+                            img.src = "http://localhost:5000/images/" + img_id;
+                            img.classList.add("image");
+
+                            img.addEventListener('click', () => {
+                                for (const sel of document.getElementsByClassName("selected-image")) {
+                                    sel.classList.remove("selected-image");
+                                }
+
+                                selected_image = img.id;
+                                img.classList.add("selected-image");
+
+                                update_render();
+                            })
+
+                            document.getElementById("image-selector").appendChild(img);
+                        }
+                    });
+            </script>
+        </div>
+        <div id="landmarks-selector">
+            <script>
+                // load images
+                fetch("http://localhost:5000/landmarks").
+                    then(response => response.json()).
+                    then(emotions => {
+                        for (var emotion in emotions) {
+                            for (var version in emotions[emotion]) {
+                                const landmark = document.createElement("div");
+                                landmark.emotion = emotion;
+                                landmark.version = version
+                                landmark.innerHTML = `${emotion} ${version}`;
+                                landmark.classList.add("landmark")
+
+                                landmark.addEventListener('click', () => {
+                                    for (const sel of document.getElementsByClassName("selected-landmark")) {
+                                        sel.classList.remove("selected-landmark");
+                                    }
+
+                                    landmark.classList.add("selected-landmark");
+
+                                    selected_emotion = landmark.emotion;
+                                    selected_version = landmark.version;
+                                    update_render();
+                                })
+
+
+                                document.getElementById("landmarks-selector").appendChild(landmark);
+                            }
+                            document.getElementById("landmarks-selector").appendChild(document.createElement("br"));
+                        }
+                    });
+            </script>
+        </div>
+
+        <div id="display">
+            <div id="display-main">
+                Main video:
+                <video id="video-main"> </video>
+                <script>
+                    var video_main = document.getElementById("video-main");
+                    const update_render_main = () => {
+                        video_main.src = "output/" + selected_image + "/" + selected_emotion;
+                    }
+                    const play_video_main = () => {
+                        video_main.play();
+                    }
+                </script>
+            </div>
+            <div id="display-selected">
+                Selected video:
+
+                <button onclick="set_as_main()" id="set-main-btn">set as main</button>
+                <script>
+                    const set_as_main = () => {
+                        fetch(`/output/${selected_image}/${selected_emotion}`,
+                            { method: "POST", body: JSON.stringify({ version: selected_version }) }).
+                            then((resp) => resp.json()).
+                            then(({ response, error }) => {
+                                if (response != "success") {
+                                    alert(error)
+                                } else {
+                                    alert(`${selected_emotion} is now using version ${selected_version}`)
+                                }
+                            })
+                    }
+                </script>
+
+                <video id="video-selected"> </video>
+                <script>
+                    var video_selected = document.getElementById("video-selected");
+                    const update_render_selected = () => {
+                        video_selected.src = "output/" + selected_image + "/" + selected_emotion + "/" + selected_version;
+                    }
+                    const play_video_selected = () => {
+                        video_selected.play();
+                    }
+                </script>
+            </div>
+            <div id="display-actions">
+                <button id="play-button" onclick="play_videos()" id="play-btn">play</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,4 +1,5 @@
 from cmath import pi
+from glob import glob
 import cv2
 from math import atan2, sqrt
 import dlib
@@ -351,11 +352,18 @@ def offset_from_anchor_point(frames):
     return (y_diff_up, y_diff_down, x_diff_left, x_diff_right)
 
 
-def list_images():
+def list_images(sort_order="asc"):
     images = os.listdir("images")
 
     if "processing" in images:
         images.remove("processing")
+
+    # sort the files by date edited
+    sort_prefix = 1
+    if sort_order == "asc":
+        sort_prefix = -1
+    images.sort(key=lambda f: sort_prefix * os.path.getmtime(os.path.join("images", f)))
+   
     return {
         "images": [i.split('.')[0] for i in images],
         "processing": [i.split('.')[0] for i in os.listdir("images/processing")]
