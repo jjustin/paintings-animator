@@ -18,10 +18,10 @@ from flask import Flask, send_from_directory, request, make_response, jsonify
 app = Flask(__name__)
 
 
-@app.route("/", defaults={"path": "src/index_additive.html"}, methods=["GET"])
+@app.route("/", defaults={"path": "index_additive.html"}, methods=["GET"])
 @app.route("/<path:path>", methods=["GET"])
 def getStatic(path):
-    return send_from_directory("../", path)
+    return send_from_directory("static", path)
 
 
 @app.route("/exists/<path:img_id>", methods=["GET"])
