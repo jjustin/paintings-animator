@@ -9,7 +9,7 @@ import numpy as np
 from detector import detect, add_new_template as register_detector_template
 
 from helpers import Timer, raise_error_response
-from generator import ensure_archive_video, ensure_video, generate_one_per_emotion, Image, set_main_version
+from storage.video_generator import ensure_archive_video, ensure_video, generate_one_per_emotion, Image, set_main_version
 from storage.image import list_images, read_cv2_image
 from storage.landmark import dict_landmarks_meta
 
@@ -30,6 +30,7 @@ def getExists(img_id):
         if fname.startswith(img_id):
             return "true"
     return "false"
+
 
 @app.route("/landmarks", methods=["GET"])
 def getLandmarks():
@@ -75,6 +76,8 @@ def handle_image_upload(img_id: str, img: Image):
 def get_image(img_id):
     img = read_cv2_image(img_id)
     return make_image_response(img)
+
+
 @app.route("/images/processing/<string:img_id>", methods=["GET"])
 def get_processing_image(img_id):
     img = read_cv2_image(img_id, path="images/processing")
@@ -124,6 +127,7 @@ def change_output_version(img_id, emotion):
     set_main_version(img_id, emotion, version)
 
     return json.dumps({"response": "success"})
+
 
 @app.route("/images/detect", methods=["POST"])
 def detect_image():
@@ -178,4 +182,4 @@ if __name__ == "__main__":
         if exc.errno != errno.EEXIST:
             raise
 
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)
