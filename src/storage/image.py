@@ -1,5 +1,4 @@
 from cmath import pi
-from glob import glob
 import cv2
 from math import atan2, sqrt
 import dlib
@@ -7,7 +6,6 @@ import numpy as np
 from helpers import Timer, raise_error_response
 from math import floor
 import copy
-import json
 import os
 from piecewiseAffine import Transformer, has_cuda
 
@@ -97,7 +95,6 @@ class Image:
 
             # x and y switched because we want to rotate to y axis
             angle = 180*atan2(dx, dy)/pi
-            print(angle)
 
             self.rotation_matrix = cv2.getRotationMatrix2D(
                 self.points[CENTER_POINT_IX], angle=-angle, scale=1)

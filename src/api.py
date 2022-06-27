@@ -101,13 +101,16 @@ def get_output(img_id, emotion):
 @app.route("/output/<string:img_id>/<string:emotion>/<string:version>", methods=["GET"])
 def get_output_versioned(img_id, emotion, version):
     '''
-    get_output_versioned responds with set emotion of given img_id
+    get_output_versioned responds with set emotion version and composition of given img_id 
     '''
     # omit file extension
     if '.' in img_id:
         img_id = '.'.join(img_id.split('.')[:-1])
 
-    ensure_archive_video(img_id, emotion, version)
+    composition = request.args.get("composition", "base").split(",")
+    force_generate = request.args.get("force_generate", False, bool)
+    ensure_archive_video(img_id, emotion, version,
+                         force_generate=force_generate, composition=composition)
 
     return send_from_directory("../output/archive", f"{img_id}_{emotion}_{version}.mp4")
 

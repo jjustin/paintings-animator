@@ -21,14 +21,14 @@
             if (selected_image == "" || selected_emotion == "" || selected_version == "") {
                 return;
             }
+
+            document.getElementById("display").style.visibility = "visible"
+            document.getElementById("tutorial").style.visibility = "hidden"
+
             update_render_main()
             update_render_selected()
 
             play_videos()
-        }
-        const play_videos = () => {
-            play_video_main()
-            play_video_selected()
         }
     </script>
     <div id="app">
@@ -43,6 +43,7 @@
                             img.id = img_id;
                             img.src = "http://localhost:5000/images/" + img_id;
                             img.classList.add("image");
+                            img.classList.add("clickable");
 
                             img.addEventListener('click', () => {
                                 for (const sel of document.getElementsByClassName("selected-image")) {
@@ -73,6 +74,7 @@
                                 landmark.version = version
                                 landmark.innerHTML = `${emotion} ${version}`;
                                 landmark.classList.add("landmark")
+                                landmark.classList.add("clickable");
 
                                 landmark.addEventListener('click', () => {
                                     for (const sel of document.getElementsByClassName("selected-landmark")) {
@@ -95,24 +97,17 @@
             </script>
         </div>
 
-        <div id="display">
+        <div id="display" style="visibility: hidden;">
             <div id="display-main">
-                Main video:
                 <video id="video-main"> </video>
                 <script>
                     var video_main = document.getElementById("video-main");
                     const update_render_main = () => {
                         video_main.src = "output/" + selected_image + "/" + selected_emotion;
                     }
-                    const play_video_main = () => {
-                        video_main.play();
-                    }
                 </script>
             </div>
             <div id="display-selected">
-                Selected video:
-
-                <button onclick="set_as_main()" id="set-main-btn">set as main</button>
                 <script>
                     const set_as_main = () => {
                         fetch(`/output/${selected_image}/${selected_emotion}`,
@@ -133,6 +128,7 @@
                     var video_selected = document.getElementById("video-selected");
                     const update_render_selected = () => {
                         video_selected.src = "output/" + selected_image + "/" + selected_emotion + "/" + selected_version;
+                        video_selected.src += "?force_generate=true"
                     }
                     const play_video_selected = () => {
                         video_selected.play();
@@ -140,7 +136,91 @@
                 </script>
             </div>
             <div id="display-actions">
-                <button id="play-button" onclick="play_videos()" id="play-btn">play</button>
+                <div id="rewind" class="button clickable" onclick="rewind_videos()">⏪</div>
+                <div id="play" class="button clickable" onclick="play_videos()">▶️</div>
+                <div id="pause" class="button clickable" onclick="pause_videos()">⏸️</div>
+                <div id="loop" class="button clickable" onclick="loop_videos_toggle()">🔁</div>
+                <div id="set-as-main" class="button clickable" onclick="set_as_main()">Set generated as main</div>
+                <script>
+                    const rewind_videos = () => {
+                        video_main.currentTime = 0;
+                        video_selected.currentTime = 0;
+                        play_videos();
+                    }
+
+                    const play_videos = () => {
+                        video_main.play();
+                        video_selected.play();
+                        video_main.controls = true
+                        video_selected.controls = true
+                    }
+
+                    const pause_videos = () => {
+                        video_main.pause();
+                        video_selected.pause();
+                        // video_main.controls = false
+                        // video_selected.controls = false
+                    }
+
+                    const loop_videos_toggle = () => {
+                        video_main.loop = !video_main.loop
+                        video_selected.loop = !video_selected.loop
+                        if (video_main.loop) {
+                            document.getElementById("loop").innerHTML = "🔁"
+                        } else {
+                            document.getElementById("loop").innerHTML = "🔂"
+                        }
+                    }
+                </script>
+                </div>
+                
+                <div id="generate-actions">
+                    <label for="base">Use </label>
+                    <input type="text" id="base" value="base" readonly>
+                    <label for="base">then freeze for </label>
+                    <input type="number" id="freeze" value="60" min="0">
+                    <label for="base">frames and</label>
+                    <label for="base"></label>
+                    <select id="reset" name="reset">
+                        <option value="morph_back">morph back</option>
+                        <option value="fade_back">fade back</option>
+                    </select>
+                    <label for="base">for</label>
+                    <input type="number" id="reset-count" value="60" min="0">
+                    <label for="base">frames</label>
+                    <div type="submit" id="generate-btn" class="button clickable" onclick=" generate_video()">Generate video</div>
+                
+                    <script>
+                        const generate_video = () => {
+                            var q = "force_generate=true&composition=base"
+                            q += ",freeze:" + document.getElementById("freeze").value
+                            q += "," + document.getElementById("reset").value + ":" + document.getElementById("reset-count").value
+                            video_selected.src = "output/" + selected_image + "/" + selected_emotion + "/" + selected_version + "?" + q
+                            console.log(video_selected.src)
+                        }
+                    </script>
+                
+                </div>
+                
+                </div>
+                <div id="tutorial">
+                    <div class="tutorial-text">
+                        <p>
+                            <b>Welcome to the Animator editor!</b>
+                        </p>
+                        <p>
+                            This is the editor for the Animator. It allows you to generate animations for the emotions of the faces in
+                            the dataset.
+                        </p>
+                        <p>
+                            To start, select an image and an emotion from the left. The generated animation will
+                            be displayed in the middle.
+                        </p>
+                        <p>
+                            Once generated, you can click on the "Set generated as main" button to set the generated animation as the
+                            main
+                            animation for the emotion.
+                        </p>
             </div>
         </div>
     </div>
