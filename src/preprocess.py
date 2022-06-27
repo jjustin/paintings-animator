@@ -1,32 +1,34 @@
-from main import Image, Video, generate_video
+from typing import List
+from storage.video import Video
+from storage.image import Image
+
 import cv2
 from tqdm import tqdm
 from math import floor
 import json, os, errno
 
 
-FPS = 30
 
-
-def preprocess_video(new_video, fps):
+def preprocess_video(new_video):
     # read the video
-    print("loading the video")
-    vid = Video(cv2.VideoCapture(new_video))
+    print(f"loading {new_video}")
+    vid = Video(video=cv2.VideoCapture(new_video))
     # anchor, _ = vid.get_frame(0)                                              #first frame
-    print("done loading the video")
+    print("loaded")
 
     coords = []
     face_coords = []
     vid_len = vid.length()
+    fps = vid.fps
     images = []
-    for frame in tqdm(range(floor(vid_len * fps))):
+    for frame in tqdm(range(floor(vid_len * fps)), "Read to memory"):
         img, has_frame = vid.get_frame(1 / fps * frame * 1000)
-        images.append(img)
+        images.append(Image(img))
 
-    for frame in tqdm(range(floor(vid_len * fps))):
+    for frame in tqdm(range(floor(vid_len * fps)), "Avg + face"):
         from_img = images[frame]
         if has_frame:
-            coords.append(average(images, frame))
+            coords.append(average(images, frame, n = int(fps/6)))
 
             # saves face coords (rectangle) from one frame into a list, L R T B
             fc_left = from_img.face.left()
@@ -40,33 +42,31 @@ def preprocess_video(new_video, fps):
 
     obj = {"coords": coords, "face": face_coords, "fps": fps}
 
+    video_n = new_video.split(".")[0]
+
     # # Creates video output of detected points
     draw_points(
-        vid.get_frame(0)[0].img,
+        vid.get_frame(0)[0],
         coords,
-        (
-            int(vid.vid.get(cv2.CAP_PROP_FRAME_WIDTH)),
-            int(vid.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-        ),
+        (vid.w,vid.h),
+        fps,
+        name = video_n
     )
 
     draw_vectors(
-        vid.get_frame(0)[0].img,
+        vid.get_frame(0)[0],
         coords,
-        (
-            int(vid.vid.get(cv2.CAP_PROP_FRAME_WIDTH)),
-            int(vid.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-        ),
+        (vid.w,vid.h),
+        fps,
+        name = video_n
     )
 
-    video_n = new_video.split(".")
-    file_path = "./preprocess/preprocess_" + video_n[0] + ".json"
+    file_path = "./landmarks/" + video_n + ".json"
     with open(file_path, "w") as out_file:
         json.dump(obj, out_file)
 
 
-def average(images, ix):
-    n = 5
+def average(images: List[Image], ix, n=5):
     out = []
     div = 0
     for frame in range(max(0, ix - n + 1), min(ix + n, len(images))):
@@ -85,8 +85,8 @@ def average(images, ix):
     return out
 
 
-def draw_points(bg, frames, size):
-    out = cv2.VideoWriter("points.mp4", cv2.VideoWriter_fourcc(*"avc1"), FPS, size)
+def draw_points(bg, frames, size, fps, name:str = ""):
+    out = cv2.VideoWriter(f"points_{name}.mp4", cv2.VideoWriter_fourcc(*"avc1"), fps, size)
 
     for frame in frames:
         i = bg.copy()
@@ -99,8 +99,8 @@ def draw_points(bg, frames, size):
     out.release()
 
 
-def draw_vectors(bg, frames, size):
-    out = cv2.VideoWriter("vectors.mp4", cv2.VideoWriter_fourcc(*"avc1"), FPS, size)
+def draw_vectors(bg, frames, size, fps, name:str = ""):
+    out = cv2.VideoWriter(f"vectors_{name}.mp4", cv2.VideoWriter_fourcc(*"avc1"), fps, size)
 
     for frame in frames:
         i = bg.copy()
@@ -128,13 +128,16 @@ def draw_vectors(bg, frames, size):
 
 
 if __name__ == "__main__":
-    if not os.path.exists("preprocess"):
+    if not os.path.exists("landmarks"):
         try:
-            os.makedirs("preprocess")
+            os.makedirs("landmarks")
         except OSError as exc:  # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
 
-    video_file_name = "faceMove.mp4"
+    from sys import argv
+    if len(argv) <=1:
+        raise
 
-    preprocess_video(video_file_name, FPS)
+    for video_file_name in argv[1:]:
+        preprocess_video(video_file_name)
