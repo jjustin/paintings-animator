@@ -1,5 +1,6 @@
 from cmath import pi
 import cv2
+import mediapipe as mp
 from math import atan2, sqrt
 import dlib
 import numpy as np
@@ -13,30 +14,46 @@ from piecewiseAffine import Transformer, has_cuda
 initTimer = Timer("init")
 applyTimer = Timer("apply")
 
-N_OF_LANDMARKS = 68
 MOUTH_AR_THRESH = 0.79
 SAFE_BORDER_SCALE = 1.05
-CENTER_POINT_IX = 27  # between the eyes
-CENTER_POINT_IX2 = 34  # nose point
+CENTER_POINT_IX = 6  # between the eyes
+CENTER_POINT_IX2 = 152  # chin
 
 PREDICTOR_FILENAME = "shape_predictor_68_face_landmarks.dat"
 
 predictor = dlib.shape_predictor(PREDICTOR_FILENAME)
 detector = dlib.get_frontal_face_detector()
+face_mesh = mp.solutions.face_mesh.FaceMesh(
+    static_image_mode=True,  # TODO: False if preprocessing
+    max_num_faces=1,
+    refine_landmarks=True,
+    min_detection_confidence=0.5)
 
 
-class UnsafeBorder:
+class FaceBorder:
     '''
-    UnsafeBorder is used to create a border around the face.
+    FaceBorder is used to create a border around the face.
     '''
 
-    def __init__(self, top: int, bottom, left, right):
+    def __init__(self, top, bottom, left, right):
         self._top = top
         self._bottom = bottom
         self._left = left
         self._right = right
 
-    def to_points(self):
+    def top(self):
+        return self._top
+
+    def bottom(self):
+        return self._bottom
+
+    def left(self):
+        return self._left
+
+    def right(self):
+        return self._right
+
+    def to_safe_border_points(self):
         return [
             [self._left, self._top],
             [self._right, self._top],
@@ -50,7 +67,7 @@ class UnsafeBorder:
 
 
 class Image:
-    def __init__(self, img, max_height=1200):
+    def __init__(self, img, max_height=1000):
         initTimer.start()
 
         # resize image to prevent long processing times
@@ -62,30 +79,22 @@ class Image:
         # cv2 image object
         self.img_cpu = img
         self.img = img
+        self.rows, self.cols, self.ch = img.shape
         if has_cuda:
             self.img = cv2.cuda_GpuMat()
             self.img.upload(img)
         # gray representation
-        self.gray = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY)
-        faces = detector(self.gray)
-        self.contains_face = len(faces) != 0
+        rgb = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
+        result = face_mesh.process(rgb)
+        self.contains_face = result.multi_face_landmarks is not None
         if self.contains_face:
             # face's data
-            self.face = faces[0]
-            self.landmarks = predictor(image=self.gray, box=self.face)
-            self.rows, self.cols, self.ch = img.shape
+            landmarks = result.multi_face_landmarks[0].landmark
 
-            self.points = [
-                [self.landmarks.part(i).x, self.landmarks.part(i).y]
-                for i in range(0, N_OF_LANDMARKS)
-            ]
-
-            self.border = [
-                [0, 0],
-                [self.cols, 0],
-                [0, self.rows],
-                [self.cols, self.rows],
-            ]
+            self.points = np.array([
+                [self.cols*landmarks[i].x, self.rows*landmarks[i].y]
+                for i in range(len(landmarks))
+            ])
 
             # rotate points to get the face aligned with the y-axis
             dx = self.points[CENTER_POINT_IX2][0] - \
@@ -103,6 +112,14 @@ class Image:
                 self.points[CENTER_POINT_IX], angle=angle, scale=1)
 
             self.points = self.rotate_points(self.points)
+
+            self.face = FaceBorder(
+                np.max(self.points[:, 1]),
+                np.min(self.points[:, 1]),
+                np.max(self.points[:, 0]),
+                np.min(self.points[:, 0]),
+            )
+
         initTimer.end()
 
     def rotate_points(self, points, inverse=False):
@@ -163,7 +180,7 @@ class Image:
         landmark_anchor,
         landmark_points,
         landmark_face_border,
-        unsafe_border: UnsafeBorder,
+        unsafe_border: FaceBorder,
         draw_overlay=False,
     ):
         """
@@ -187,15 +204,15 @@ class Image:
                 (landmark_points[i][0] - fx1) + ax1 - landmark_anchor[i][0],
                 (landmark_points[i][1] - fy1) + ay1 - landmark_anchor[i][1],
             ]
-            for i in range(N_OF_LANDMARKS)
+            for i in range(len(self.points))
         ]
 
         from_pts = copy.deepcopy(landmark_points)
 
         # # handle mouth
-        A = euclidean_dist(from_pts[51], from_pts[59])
-        B = euclidean_dist(from_pts[53], from_pts[57])
-        C = euclidean_dist(from_pts[49], from_pts[55])
+        A = euclidean_dist(from_pts[81], from_pts[178])  # left part of mouth
+        B = euclidean_dist(from_pts[311], from_pts[402])  # right part of mouth
+        C = euclidean_dist(from_pts[62], from_pts[308])  # mouth width
 
         # # compute the mouth aspect ratio
         mar = (A + B) / (2.0 * C)
@@ -209,11 +226,11 @@ class Image:
         x_scale = (tx2 - tx1) / (fx2 - fx1)
         y_scale = (ty2 - ty1) / (fy2 - fy1)
 
-        for i in range(N_OF_LANDMARKS):
+        for i in range(len(self.points)):
             from_pts[i][0] = self.points[i][0] + x_scale * changes[i][0]  # x
             from_pts[i][1] = self.points[i][1] + y_scale * changes[i][1]  # y
 
-        border_points = unsafe_border.to_points()
+        border_points = unsafe_border.to_safe_border_points()
 
         final_points = self.rotate_points(np.concatenate(
             (from_pts, border_points)), inverse=True)
@@ -306,7 +323,7 @@ def get_unsafe_border(frames, to_img: Image):
     left_scale = (from_left) / (anchor_left)
     right_scale = (from_right) / (anchor_right)
 
-    return UnsafeBorder(
+    return FaceBorder(
         int(to_img.points[CENTER_POINT_IX][1] -
             top * top_scale * SAFE_BORDER_SCALE),
         int(
@@ -359,8 +376,9 @@ def list_images(sort_order="asc"):
     sort_prefix = 1
     if sort_order == "asc":
         sort_prefix = -1
-    images.sort(key=lambda f: sort_prefix * os.path.getmtime(os.path.join("images", f)))
-   
+    images.sort(key=lambda f: sort_prefix *
+                os.path.getmtime(os.path.join("images", f)))
+
     return {
         "images": [i.split('.')[0] for i in images],
         "processing": [i.split('.')[0] for i in os.listdir("images/processing")]

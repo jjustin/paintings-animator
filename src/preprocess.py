@@ -20,15 +20,15 @@ def preprocess_video(new_video):
     face_coords = []
     vid_len = vid.length()
     fps = vid.fps
-    images = []
+    images: List[Image] = []
     for frame in tqdm(range(floor(vid_len * fps)), "Read to memory"):
         img, has_frame = vid.get_frame(1 / fps * frame * 1000)
         images.append(Image(img))
 
     for frame in tqdm(range(floor(vid_len * fps)), "Avg + face"):
         from_img = images[frame]
-        if has_frame:
-            coords.append(average(images, frame, n = int(fps/6)))
+        if from_img.contains_face:
+            coords.append(average(images, frame, n=int(fps/6)))
 
             # saves face coords (rectangle) from one frame into a list, L R T B
             fc_left = from_img.face.left()
@@ -93,7 +93,7 @@ def draw_points(bg, frames, size, fps, name:str = ""):
         cv2.rectangle(i, (0, 0), size, (0, 0, 0), thickness=-1)
         for point in frame:
             cv2.circle(
-                i, (point[0], point[1]), radius=2, color=(0, 0, 255), thickness=8
+                i, (point[0], point[1]), radius=1, color=(0, 0, 255), thickness=8
             )
         out.write(i)
     out.release()
@@ -114,12 +114,12 @@ def draw_vectors(bg, frames, size, fps, name:str = ""):
                 thickness=5,
             )
             cv2.circle(
-                i, (frame[j][0], frame[j][1]), radius=2, color=(0, 0, 255), thickness=8
+                i, (frame[j][0], frame[j][1]), radius=1, color=(0, 0, 255), thickness=8
             )
             cv2.circle(
                 i,
                 (frames[0][j][0], frames[0][j][1]),
-                radius=2,
+                radius=1,
                 color=(0, 255, 0),
                 thickness=8,
             )
