@@ -1,4 +1,5 @@
 from cmath import pi
+from typing import List
 import cv2
 import mediapipe as mp
 from math import atan2, sqrt
@@ -18,6 +19,13 @@ MOUTH_AR_THRESH = 0.79
 SAFE_BORDER_SCALE = 1.05
 CENTER_POINT_IX = 6  # between the eyes
 CENTER_POINT_IX2 = 152  # chin
+LEFT_EYE_POINTS = [362, 382, 381, 380, 374, 373,
+                   390, 249, 263, 466, 388, 387, 386, 385, 384, 398]
+RIGHT_EYE_POINTS = [33, 7, 163, 144, 145, 153, 154,
+                    155, 133, 173, 157, 158, 159, 160, 161, 246]
+LEFT_IRIS_POINTS = [474, 475, 476, 477]
+RIGHT_IRIS_POINTS = [469, 470, 471, 472]
+
 
 PREDICTOR_FILENAME = "shape_predictor_68_face_landmarks.dat"
 
@@ -238,6 +246,12 @@ class Image:
         start_points = self.rotate_points(np.concatenate(
             (self.points, border_points)), inverse=True)
 
+        # Detect if eyes are closed and if so, drop covered iris points
+        drop = eye_indexes_to_drop(landmark_points)
+        if len(drop) != 0:
+            final_points = np.delete(final_points, drop, 0)
+            start_points = np.delete(start_points, drop, 0)
+
         transformTimer = Timer("transform").start()
 
         t = Transformer(self.img, start_points, final_points)
@@ -260,6 +274,20 @@ class Image:
 
         return img
 
+
+def eye_indexes_to_drop(source_points) -> List[int]:
+    src = np.array(source_points)
+
+    out = np.array([], dtype=np.int32)
+    for ix in LEFT_IRIS_POINTS:
+        pt = src[ix].astype(np.float32)
+        if cv2.pointPolygonTest(src[LEFT_EYE_POINTS], pt, False) <= 0:
+            out = np.append(out, ix)
+    for ix in RIGHT_IRIS_POINTS:
+        pt = src[ix].astype(np.float32)
+        if cv2.pointPolygonTest(src[RIGHT_EYE_POINTS], pt, False) <= 0:
+            out = np.append(out, ix)
+    return out
 
 def euclidean_dist(p1, p2):
     return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
