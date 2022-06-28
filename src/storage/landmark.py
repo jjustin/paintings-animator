@@ -8,7 +8,7 @@ class Landmarks:
         json_path = "landmarks/" + name + ".json"
         with open(json_path) as json_file:
             data = json.load(json_file)
-            self.type = name.split("_")[0]
+            self.emotion, self.version = name.split("_")
             self.fps = data["fps"]
             self.frames = data["coords"]
             self.faces = data["face"]

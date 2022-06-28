@@ -23,7 +23,7 @@ def preprocess_video(new_video):
     images: List[Image] = []
     for frame in tqdm(range(floor(vid_len * fps)), "Read to memory"):
         img, has_frame = vid.get_frame(1 / fps * frame * 1000)
-        images.append(Image(img))
+        images.append(Image("unset_id", img))
 
     for frame in tqdm(range(floor(vid_len * fps)), "Avg + face"):
         from_img = images[frame]

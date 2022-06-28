@@ -67,9 +67,10 @@ class FaceBorder:
 
 
 class Image:
-    def __init__(self, img, max_height=1000):
+    def __init__(self, img_id, img, max_height=1000):
         initTimer.start()
 
+        self.id = img_id
         # resize image to prevent long processing times
         if img.shape[0] > max_height:
             scale_factor = max_height / img.shape[0]

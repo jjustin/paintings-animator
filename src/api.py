@@ -52,7 +52,7 @@ def add_image():
         filepath = "images/processing/" + filename
         file.save(filepath)
 
-        img = Image(cv2.imread(filepath))
+        img = Image(img_id, cv2.imread(filepath))
         if not img.contains_face:
             os.remove(filepath)
             return {"error": "no face detected"}

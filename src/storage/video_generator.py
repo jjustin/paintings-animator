@@ -68,17 +68,18 @@ def ensure_archive_video(img_id: str, emotion: str, version: str, img: Image = N
     version - version of emotion
     img - optional image object, if not provided, it will be read from disk
     """
-    landmarks = get_landmarks(emotion, version)
     path = f"output/archive/{img_id}_{emotion}_{version}.mp4"
-    _ensure_video(img_id, landmarks, path, img, force_generate, composition)
+    _ensure_video(img_id, emotion, version, path,
+                  img, force_generate, composition)
 
 
-def _ensure_video(img_id: str, landmarks: Landmarks, path: str, img: Image = None, force_generate: bool = False, composition: List[str] = None):
+def _ensure_video(img_id: str, emotion: str, version: str, path: str, img: Image = None, force_generate: bool = False, composition: List[str] = None):
     if not force_generate and os.path.exists(path):
         return
 
+    landmarks = get_landmarks(emotion, version)
     if img is None:
-        img = Image(read_cv2_image(img_id))
+        img = Image(img_id, read_cv2_image(img_id))
     _generate_video(landmarks, img, img_id, path, composition)
 
 
