@@ -274,15 +274,15 @@ class Image:
 
 
 def eye_indexes_to_drop(source_points) -> List[int]:
-    src = np.array(source_points)
+    src = np.array(source_points, dtype=np.float32)
 
     out = np.array([], dtype=np.int32)
     for ix in LEFT_IRIS_POINTS:
-        pt = src[ix].astype(np.float32)
+        pt = src[ix]
         if cv2.pointPolygonTest(src[LEFT_EYE_POINTS], pt, False) <= 0:
             out = np.append(out, ix)
     for ix in RIGHT_IRIS_POINTS:
-        pt = src[ix].astype(np.float32)
+        pt = src[ix]
         if cv2.pointPolygonTest(src[RIGHT_EYE_POINTS], pt, False) <= 0:
             out = np.append(out, ix)
     return out
