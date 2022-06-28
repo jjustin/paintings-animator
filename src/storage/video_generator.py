@@ -11,7 +11,7 @@ from helpers import raise_error_response
 
 """
 All generated videos are kept in 'archive' dir, to prevent regenerating them every time they are needed.
-This is why, when a video is generated, archive version is created and is later copied in 'output' folder. 
+This is why, when a video is generated, archive version is created and is later copied in 'output' folder.
 """
 
 
@@ -127,7 +127,11 @@ class OuputComposer:
                 l = int(comp.split(":")[1])
                 self.comp_funcs.append(self._fade_back_animation(l))
 
+            elif comp == "roll_back":
+                self.comp_funcs.append(self._roll_back_animation())
+
         self.frames = []
+        self.base_frames = []
         self.last_frame = img.img_cpu
         self.out = out
 
@@ -157,6 +161,7 @@ class OuputComposer:
                 frame_img = self.img.apply(
                     self.anchor_lframe, self.lframes[i], self.landmarks.faces[i], self.unsafe_border, draw_overlay=False
                 )
+                self.base_frames.append(frame_img)
                 self._add_frame(frame_img, lframe=self.lframes[i])
         return anim
 
@@ -202,11 +207,23 @@ class OuputComposer:
         fades back to original image in span of `length` frames
         '''
         def anim():
+            last_frame = self.last_frame
             for i in tqdm(range(length), "Fade back"):
-                rate = i/length
+                rate = (i+1)/length
 
-                frame = (1-rate) * self.img.img_cpu + rate * self.last_frame
-                self._add_frame(self.img.img_cpu)
+                frame = (rate) * self.img.img_cpu + (1-rate) * last_frame
+                self._add_frame(frame.astype(np.uint8))
+        return anim
+
+    def _roll_back_animation(self):
+        '''
+        rolls back the original animation
+        '''
+        def anim():
+            base_frames = copy.deepcopy(self.base_frames)
+            base_frames.reverse()
+            for f in tqdm(base_frames, "Rollback animation"):
+                self._add_frame(f)
         return anim
 
     def compose(self):

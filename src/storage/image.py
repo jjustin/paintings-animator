@@ -101,9 +101,7 @@ class Image:
             landmarks = result.multi_face_landmarks[0].landmark
 
             self.points = np.array([
-                [self.cols*landmarks[i].x, self.rows*landmarks[i].y]
-                for i in range(len(landmarks))
-            ])
+                [self.cols * l.x, self.rows * l.y]for l in landmarks])
 
             # rotate points to get the face aligned with the y-axis
             dx = self.points[CENTER_POINT_IX2][0] - \

@@ -93,7 +93,7 @@ def draw_points(bg, frames, size, fps, name:str = ""):
         cv2.rectangle(i, (0, 0), size, (0, 0, 0), thickness=-1)
         for point in frame:
             cv2.circle(
-                i, (point[0], point[1]), radius=1, color=(0, 0, 255), thickness=8
+                i, (point[0], point[1]), radius=1, color=(0, 0, 255), thickness=2
             )
         out.write(i)
     out.release()
@@ -111,17 +111,17 @@ def draw_vectors(bg, frames, size, fps, name:str = ""):
                 (frame[j][0], frame[j][1]),
                 (frames[0][j][0], frames[0][j][1]),
                 color=(0, 0, 255),
-                thickness=5,
+                thickness=1,
             )
             cv2.circle(
-                i, (frame[j][0], frame[j][1]), radius=1, color=(0, 0, 255), thickness=8
+                i, (frame[j][0], frame[j][1]), radius=1, color=(0, 0, 255), thickness=2
             )
             cv2.circle(
                 i,
                 (frames[0][j][0], frames[0][j][1]),
                 radius=1,
                 color=(0, 255, 0),
-                thickness=8,
+                thickness=2,
             )
         out.write(i)
     out.release()

@@ -184,9 +184,10 @@
                     <select id="reset" name="reset">
                         <option value="morph_back">morph back</option>
                         <option value="fade_back">fade back</option>
+                        <option value="roll_back" selected>roll back</option>
                     </select>
                     <label for="base">for</label>
-                    <input type="number" id="reset-count" value="60" min="0">
+                    <input type="number" id="reset-count" value="30" min="0">
                     <label for="base">frames</label>
                     <div type="submit" id="generate-btn" class="button clickable" onclick=" generate_video()">Generate video</div>
                 
@@ -194,7 +195,11 @@
                         const generate_video = () => {
                             var q = "force_generate=true&composition=base"
                             q += ",freeze:" + document.getElementById("freeze").value
-                            q += "," + document.getElementById("reset").value + ":" + document.getElementById("reset-count").value
+                            val = document.getElementById("reset").value
+                            q += "," + val
+                            if (val != "roll_back"){
+                                q += ":" + document.getElementById("reset-count").value
+                            }  
                             video_selected.src = "output/" + selected_image + "/" + selected_emotion + "/" + selected_version + "?" + q
                             console.log(video_selected.src)
                         }
@@ -214,12 +219,17 @@
                         </p>
                         <p>
                             To start, select an image and an emotion from the left. The generated animation will
-                            be displayed in the middle.
-                        </p>
+                            be displayed on the right. If selected emotion was already generated, latest composition of the animation will be used.
+                            If you want to change the emotion, you can select a different one from the
+                            list.
+                            </p>
+                            <p>
+                                To generate new composition of the animation, you can use the composer on the bottom right(will be displayed
+                                with the video).
+                            </p>
                         <p>
                             Once generated, you can click on the "Set generated as main" button to set the generated animation as the
-                            main
-                            animation for the emotion.
+                            main animation for the emotion.
                         </p>
             </div>
         </div>
