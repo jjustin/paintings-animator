@@ -134,9 +134,15 @@ body {
 #video-main {
   outline: none;
   background-size: 100% 100%;
-  height: 100%;
+  height: 90%;
   max-width: 100%;
-  max-height: 100%;
+  max-height: 90%;
+  }
+  
+  #desc-selected,
+  #desc-main {
+    padding-bottom: 10px;
+    font-size: x-large;
 }
 
 .button {
@@ -155,4 +161,12 @@ body {
 
 .clickable {
   cursor: pointer;
+}
+.m-x-5 {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.w-30 {
+  width: 30px;
 }

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Animator editor</title>
+    <title>Animation editor</title>
 
     <link rel="stylesheet" href="stylesheet-editor.css">
 
@@ -22,6 +22,7 @@
                 return;
             }
 
+            document.getElementById("baseText").innerHTML = `After "${selected_emotion} ${selected_version}" freeze animation for`;
             document.getElementById("display").style.visibility = "visible"
             document.getElementById("tutorial").style.visibility = "hidden"
 
@@ -98,10 +99,12 @@
 
         <div id="display" style="visibility: hidden;">
             <div id="display-main">
+                <div id="desc-main"></div>
                 <video id="video-main"> </video>
                 <script>
                     var video_main = document.getElementById("video-main");
                             const update_render_main = (onload) => {
+                                document.getElementById("desc-main").innerHTML = `Current video for ${selected_emotion}:`;
                         video_main.src = "output/" + selected_image + "/" + selected_emotion;
                             video_main.onloadeddata = onload
                     }
@@ -123,10 +126,12 @@
                     }
                 </script>
 
+                <div id="desc-selected"></div>
                 <video id="video-selected"> </video>
                 <script>
                     var video_selected = document.getElementById("video-selected");
                     const update_render_selected = () => {
+                        document.getElementById("desc-selected").innerHTML = `Generated video for ${selected_emotion} ${selected_version}:`;
                         video_selected.src = "output/" + selected_image + "/" + selected_emotion + "/" + selected_version;
                         //video_selected.src += "?force_generate=true"
                     }
@@ -173,23 +178,23 @@
                     }
                 </script>
                 </div>
-                
-                <div id="generate-actions">
-                    <label for="base">Use </label>
-                    <input type="text" id="base" value="base" readonly>
-                    <label for="base">then freeze for </label>
-                    <input type="number" id="freeze" value="60" min="0">
+
+                <div id="generate-actions" style="border-width: 1px; border-top-style: solid;">
+                    <label id="baseText" for="base">Use base and freeze for </label>
+                    <input type="text" id="base" value="base" readonly hidden>
+                    <input type="number" id="freeze" value="60" min="0" class="m-x-5 w-30">
                     <label for="base">frames and</label>
                     <label for="base"></label>
-                    <select id="reset" name="reset">
+                    <select id="reset" name="reset" class="m-x-5">
                         <option value="morph_back">morph back</option>
                         <option value="fade_back">fade back</option>
                         <option value="roll_back" selected>roll back</option>
                     </select>
-                    <label for="base">for</label>
-                    <input type="number" id="reset-count" value="30" min="0">
+                    <label for="base">in</label>
+                    <input type="number" id="reset-count" value="30" min="0" class="m-x-5 w-30">
                     <label for="base">frames</label>
-                    <div type="submit" id="generate-btn" class="button clickable" onclick=" generate_video()">Generate video</div>
+                    <div type="submit" id="generate-btn" class="button clickable" onclick=" generate_video()" style="margin-left: 30px;">
+                        Generate video</div>
                 
                     <script>
                         const generate_video = () => {
