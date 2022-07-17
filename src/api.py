@@ -1,3 +1,4 @@
+from traceback import format_exc
 from uuid import uuid4
 from threading import Thread
 
@@ -98,6 +99,7 @@ def get_output(img_id, emotion):
     return send_from_directory("../output", f"{img_id}_{emotion}.mp4")
 
 
+used_formIDs = set()
 @app.route("/output/<string:img_id>/<string:emotion>/<string:version>", methods=["GET"])
 def get_output_versioned(img_id, emotion, version):
     '''
@@ -109,8 +111,13 @@ def get_output_versioned(img_id, emotion, version):
 
     composition = request.args.get("composition", "base").split(",")
     force_generate = request.args.get("force_generate", False, bool)
+    formID = request.args.get("formID", False, bool)
+    if force_generate and formID in used_formIDs:
+        force_generate = False
     ensure_archive_video(img_id, emotion, version,
                          force_generate=force_generate, composition=composition)
+
+    used_formIDs.add(formID)
 
     return send_from_directory("../output/archive", f"{img_id}_{emotion}_{version}.mp4")
 
