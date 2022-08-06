@@ -159,7 +159,7 @@ class OuputComposer:
         def anim():
             for i in tqdm(range(len(self.lframes)), "Base animation"):
                 frame_img = self.img.apply(
-                    self.anchor_lframe, self.lframes[i], self.landmarks.faces[i], self.unsafe_border, draw_overlay=False
+                    self.anchor_lframe, self.lframes[i], self.landmarks.faces[0], self.unsafe_border, draw_overlay=False
                 )
                 self.base_frames.append(frame_img)
                 self._add_frame(frame_img, lframe=self.lframes[i])

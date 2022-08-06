@@ -113,10 +113,10 @@ class Image:
             angle = 180*atan2(dx, dy)/pi
 
             self.rotation_matrix = cv2.getRotationMatrix2D(
-                self.points[CENTER_POINT_IX], angle=-angle, scale=1)
+                (0, 0), angle=-angle, scale=1)
 
             self.inverse_rotation_matrix = cv2.getRotationMatrix2D(
-                self.points[CENTER_POINT_IX], angle=angle, scale=1)
+                (0, 0), angle=angle, scale=1)
 
             self.points = self.rotate_points(self.points)
 
@@ -142,25 +142,16 @@ class Image:
         return (self.cols, self.rows)
 
     # draws face detection data on img
-    def draw(self, points=None, face=None):
+    def draw(self, points=None):
         if points is None:
-            points = self.points
-        if face is None:
-            face = self.face
-        img = self.img.copy()
-        cv2.rectangle(
-            img=img,
-            pt1=(face.left(), face.top()),
-            pt2=(face.right(), face.bottom()),
-            color=(0, 0, 255),
-            thickness=4,
-        )
+            points = self.rotate_points(self.points, inverse=True)
+        img = self.img_cpu.copy()
         for [x, y] in points:
             # Draw a circle
             cv2.circle(
                 img=img,
                 center=(floor(x), floor(y)),
-                radius=3,
+                radius=2,
                 color=(0, 255, 0),
                 thickness=-1,
             )
@@ -268,10 +259,17 @@ class Image:
             pts = np.int32(from_pts[60:68])
             cv2.fillPoly(img, [pts], (255, 255, 255))
 
+        img = eyes_keep_solid(img, self.img_cpu, drop,
+                              start_points, final_points)
+
         applyTimer.end()
 
         return img
 
+
+def eyes_keep_solid(img, original, drop, start_points, final_points):
+    #TODO
+    return img
 
 def eye_indexes_to_drop(source_points) -> List[int]:
     src = np.array(source_points, dtype=np.float32)

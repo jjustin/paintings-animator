@@ -85,6 +85,11 @@ def get_processing_image(img_id):
     return make_image_response(img)
 
 
+@app.route("/images/<string:img_id>/points", methods=["GET"])
+def draw_face_points(img_id):
+    img = read_cv2_image(img_id)
+    return make_image_response(Image(img_id, img).draw())
+
 @app.route("/output/<string:img_id>/<string:emotion>", methods=["GET"])
 def get_output(img_id, emotion):
     '''
@@ -111,7 +116,7 @@ def get_output_versioned(img_id, emotion, version):
 
     composition = request.args.get("composition", "base").split(",")
     force_generate = request.args.get("force_generate", False, bool)
-    formID = request.args.get("formID", False, bool)
+    formID = request.args.get("formID", "", str)
     if force_generate and formID in used_formIDs:
         force_generate = False
     ensure_archive_video(img_id, emotion, version,

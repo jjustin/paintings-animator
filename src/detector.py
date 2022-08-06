@@ -84,14 +84,14 @@ def add_new_template(img_grayscale, img_id):
     templates.append(Template(img_grayscale, img_id))
 
 
-RATIO_TRESHOLD = 0.7
+RATIO_TRESHOLD = 0.8
 ''' https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html propeses 0.7'''
 
 
 def detect(detecting_image, skip_images=[], good_match_threshold=10):
     '''
     detect detects templates in the detecting_image and returns possible matches
-    
+
     good_match_threshold - number of keypoints that must match to be considered a match
     skip_images - list of image ids to skip
     '''
@@ -112,13 +112,14 @@ def detect(detecting_image, skip_images=[], good_match_threshold=10):
 
     knn_matches = detector.match(descriptors, k=2)
 
+    # matchesMask = [[0, 0] for i in range(len(knn_matches))]
     matches_counter: Dict[str, List] = {}
     for i, (m, n) in enumerate(knn_matches):
         if m.distance < RATIO_TRESHOLD * n.distance:
             if m.imgIdx not in matches_counter:
-                print(m.imgIdx)
                 matches_counter[m.imgIdx] = []
             matches_counter[m.imgIdx].append(m)
+            # matchesMask[i] = [1, 0]
 
     out = []
 
@@ -127,6 +128,7 @@ def detect(detecting_image, skip_images=[], good_match_threshold=10):
     for i in matches_counter.keys():
         good_matches = matches_counter[i]
         template: Template = templates[i]
+
         print(f"{template.img_id} contains {len(good_matches)} keypoint matches")
         if template.img_id in skip_images:
             continue
@@ -173,11 +175,12 @@ def detect(detecting_image, skip_images=[], good_match_threshold=10):
 
         # kp_img = cv2.drawMatchesKnn(detecting_image, keypoints, template.img,
         #                             template.keypoints, knn_matches, None, **draw_params)
-        cv2.polylines(detecting_image, [np.int32(painting_corners)],
-                      True, (0, 255, 0), 1)
+        # cv2.polylines(detecting_img, [np.int32(painting_corners)],
+        #                 True, (0, 0, 255), 5)
 
     # For debug purposes
-    cv2.imwrite(f"debug/detected_{time()}.png", detecting_image)
+    # cv2.imwrite(f"debug/detected_{time()}.png", detecting_img)
+    # cv2.imwrite(f"debug/matches_{time()}.png", img_matches)
 
     timer_all.end()
 
