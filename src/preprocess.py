@@ -21,20 +21,23 @@ def preprocess_video(new_video):
     vid_len = vid.length()
     fps = vid.fps
     images: List[Image] = []
-    for frame in tqdm(range(floor(vid_len * fps)), "Read to memory"):
+    for frame in tqdm(range(floor(vid_len * fps)-1), "Read to memory"):
         img, has_frame = vid.get_frame(1 / fps * frame * 1000)
+        if img is None:
+            print("no frame")
+            continue
         images.append(Image("unset_id", img))
 
-    for frame in tqdm(range(floor(vid_len * fps)), "Avg + face"):
+    for frame in tqdm(range(len(images)), "Avg + face"):
         from_img = images[frame]
         if from_img.contains_face:
             coords.append(average(images, frame, n=int(fps/6)))
 
             # saves face coords (rectangle) from one frame into a list, L R T B
-            fc_left = from_img.face.left()
-            fc_right = from_img.face.right()
-            fc_top = from_img.face.top()
-            fc_bottom = from_img.face.bottom()
+            fc_left = from_img.faces.get_face_ix(0).left()
+            fc_right = from_img.faces.get_face_ix(0).right()
+            fc_top = from_img.faces.get_face_ix(0).top()
+            fc_bottom = from_img.faces.get_face_ix(0).bottom()
             fc_list = [fc_left, fc_right, fc_top, fc_bottom]
             face_coords.append(fc_list)
         else:
@@ -72,15 +75,15 @@ def average(images: List[Image], ix, n=5):
     for frame in range(max(0, ix - n + 1), min(ix + n, len(images))):
         div += n - abs(frame - ix)
 
-    for i in range(len(images[0].points)):  # go over each point
+    for i in range(len(images[0].points[0])):  # go over each point
         avgx = 0
         avgy = 0
         for frame in range(
             max(0, ix - n + 1), min(ix + n, len(images))
         ):  # find average of last/next few frames
             mult = n - abs(frame - ix)
-            avgx += mult * images[frame].points[i][0]
-            avgy += mult * images[frame].points[i][1]
+            avgx += mult * images[frame].points[0][i][0]
+            avgy += mult * images[frame].points[0][i][1]
         out.append([int(avgx / div), int(avgy / div)])
     return out
 
