@@ -18,7 +18,6 @@ from flask import Flask, send_from_directory, request, make_response, jsonify
 
 app = Flask(__name__)
 
-
 @app.route("/", defaults={"path": "index_additive.html"}, methods=["GET"])
 @app.route("/<path:path>", methods=["GET"])
 def getStatic(path):
@@ -114,7 +113,9 @@ def get_output_versioned(img_id, emotion, version):
     if '.' in img_id:
         img_id = '.'.join(img_id.split('.')[:-1])
 
-    composition = request.args.get("composition", "base").split(",")
+    composition = request.args.get("composition", None)
+    if composition is not None:
+        composition = composition.split(",")
     force_generate = request.args.get("force_generate", False, bool)
     formID = request.args.get("formID", "", str)
     if force_generate and formID in used_formIDs:
@@ -150,7 +151,7 @@ def detect_image():
     r = detect(img,
                skip_images=request.args.get("skip_images", "").split(","),
                good_match_threshold=request.args.get(
-                   "good_match_threshold", 20, type=int)
+                   "good_match_threshold", 50, type=int)
                )
     # return make_image_response(r)
     return jsonify(r)

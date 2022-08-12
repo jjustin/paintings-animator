@@ -5,7 +5,7 @@ from shutil import copyfile
 import numpy as np
 from tqdm import tqdm
 import copy
-from storage.image import Image, FaceBorder, get_unsafe_border, read_cv2_image
+from storage.image import Image, FaceBorders, get_unsafe_border, read_cv2_image
 from storage.landmark import Landmarks, get_landmarks, dict_landmarks_meta
 from helpers import raise_error_response
 
@@ -85,7 +85,7 @@ def _ensure_video(img_id: str, emotion: str, version: str, path: str, img: Image
 
 def _generate_video(landmarks: Landmarks, to_img: Image, img_id: str, output_path: str, composition: List[str] = None):
     if composition == None:
-        composition = ["base"]
+        composition = ["base", "freeze:60", "roll_back"]
 
     print(
         f"Generating video from image {img_id} and landmarks {landmarks.name} with composition {composition}")
@@ -105,7 +105,7 @@ def _generate_video(landmarks: Landmarks, to_img: Image, img_id: str, output_pat
 
 
 class OuputComposer:
-    def __init__(self, img: Image, landmarks: Landmarks, unsafe_border: FaceBorder, composition: List[str], out: cv2.VideoWriter):
+    def __init__(self, img: Image, landmarks: Landmarks, unsafe_border: FaceBorders, composition: List[str], out: cv2.VideoWriter):
         self.img = img
         self.landmarks = landmarks
         self.unsafe_border = unsafe_border

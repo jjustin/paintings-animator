@@ -35,13 +35,13 @@
         <div id="image-selector">
             <script>
                 // load images
-                fetch("http://localhost:5000/images").
+                fetch("images").
                     then(response => response.json()).
                     then(({ images }) => {
                         for (var img_id of images) {
                             const img = document.createElement("img");
                             img.id = img_id;
-                            img.src = "http://localhost:5000/images/" + img_id;
+                            img.src = "images/" + img_id;
                             img.classList.add("image");
                             img.classList.add("clickable");
 
@@ -64,7 +64,7 @@
         <div id="landmarks-selector">
             <script>
                 // load images
-                fetch("http://localhost:5000/landmarks").
+                fetch("landmarks").
                     then(response => response.json()).
                     then(emotions => {
                         for (var emotion in emotions) {
