@@ -1,5 +1,5 @@
 async function getArray() {
-    return await fetch("http://localhost:5000/images").then(response => response.json())
+    return await fetch("images").then(response => response.json())
 }
 
 async function loadImages() {
@@ -19,7 +19,7 @@ async function loadImages() {
         document.querySelector('#image-picker').appendChild(image)
         // keep checking if file exists
         let checkForChange = async () => {
-            let exists = await fetch(`http://localhost:5000/exists/${full_name}`).then(x => x.text()).then(x => x == 'true')
+            let exists = await fetch(`exists/${full_name}`).then(x => x.text()).then(x => x == 'true')
             console.log(exists)
             if (exists) {
                 image.classList.remove("processing")
@@ -100,7 +100,7 @@ addNewImage = () => {
         const formData = new FormData()
         formData.append('file', file)
 
-        response = await fetch("http://localhost:5000/images", { method: "POST", body: formData }).then(x => x.json())
+        response = await fetch("images", { method: "POST", body: formData }).then(x => x.json())
 
         if (response.error) {
             alert("Error: " + response.error)
