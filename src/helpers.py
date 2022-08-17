@@ -20,6 +20,9 @@ def cpu_to_gpu(image) -> cv.cuda_GpuMat:
     return image_gpu
 
 
+def gpu_to_cpu(image: cv.cuda_GpuMat):
+    return image.download()
+
 def raise_error_response(error, status):
     resp = Response(json.dumps({"error": error}), status=status)
     abort(resp)

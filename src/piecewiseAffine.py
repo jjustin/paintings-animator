@@ -1,12 +1,11 @@
 # Custom implementation of piecewise affine transformation
 
 import json
-from multiprocessing import Pool
-from time import time_ns
 import numpy as np
 import cv2 as cv
+from skimage.transform import PiecewiseAffineTransform, warp
 
-from helpers import cpu_to_gpu, show, Timer
+from helpers import cpu_to_gpu, gpu_to_cpu, show, Timer
 
 has_cuda = cv.cuda.getCudaEnabledDeviceCount() > 0
 if not has_cuda:
@@ -31,13 +30,13 @@ class Point(object):
 class Transformer():
     def __init__(self, img, src, dst) -> None:
         self.img = img
+        w, h = self._img_size()
         if has_cuda:
-            self.src = src
-            self.dst = dst
+            self.src = np.append(src, [[w, h], [0, 0], [w, 0], [0, h]], axis=0)
+            self.dst = np.append(dst, [[w, h], [0, 0], [w, 0], [0, h]], axis=0)
             return
         self.dst_img = None
         self.mapping = self._get_point_mapping(src, dst)
-        w, h = self._img_size()
         # w+1, h+1 to prevent out of bounds for border points
         self.subdiv = cv.Subdiv2D((0, 0, w+1, h+1))
         self.subdiv.insert(src)
@@ -50,6 +49,12 @@ class Transformer():
 
     def warp_affine_pw(self):
         '''preforms affine piecewise transformation and returns transformed image in CPU memory'''
+        tform = PiecewiseAffineTransform()
+        tform.estimate(np.float32(self.dst),
+                       np.float32(self.src))
+
+        return (warp(gpu_to_cpu(self.img), tform, mode='reflect')*255).astype(np.uint8)
+
         if has_cuda:
             return cv.cuda.warpPiecewiseAffine(self.img, self.src, self.dst).download()
             
