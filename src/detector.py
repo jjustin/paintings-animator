@@ -97,15 +97,15 @@ def detect(detecting_image, skip_images=[], good_match_threshold=10):
     '''
     timer_all.start()
 
-    # Scale the image to height of max 1440 to reduce processing time
-    print("input size: ", detecting_image.shape)
+    # Scale the image to height of max 1080 to reduce processing time
+    # print("input size: ", detecting_image.shape)
 
     if detecting_image.shape[0] > 1080:
         scale_factor = 1080 / detecting_image.shape[0]
 
         detecting_image = cv2.resize(
             detecting_image, (0, 0), fx=scale_factor, fy=scale_factor)
-        print("input size after resize: ", detecting_image.shape)
+        # print("input size after resize: ", detecting_image.shape)
 
     detecting_image = cv2.cvtColor(detecting_image, cv2.COLOR_BGR2GRAY)
     keypoints, descriptors = detector(detecting_image, None)
@@ -129,13 +129,15 @@ def detect(detecting_image, skip_images=[], good_match_threshold=10):
         good_matches = matches_counter[i]
         template: Template = templates[i]
 
-        print(f"{template.img_id} contains {len(good_matches)} keypoint matches")
         if template.img_id in skip_images:
             continue
 
         # skip images with not enough matched keypoints
         if len(good_matches) < good_match_threshold:
             continue
+
+        print(
+            f"Approved {template.img_id} with {len(good_matches)} keypoint matches")
 
         # create arrays of points in gallery and on image
         template_points = np.empty((len(good_matches), 2), dtype=np.float32)
